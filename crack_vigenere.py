@@ -8,26 +8,7 @@ import ngram_score as ns
 
 fitness = ns.NgramScore('texts/Frequencies/english_quadgrams.txt')
 
-# loads cipher text, removes punctuation and whitespace
-# with open("Texts/Code_texts/vigtest2.txt") as f:
-#     text = f.read()
-# text = re.sub('[^A-Z]','', text.upper())
-
 text = tools.import_cipher('texts/Code_texts/vigtest2.txt')
-
-
-# returns a dictionary containing cipher text characters
-# hashed to the number of times they occur
-# def frequency_analysis(text):
-#     return {char : text.count(char) for char in set(text)}
-
-# # calculates the IC (Index of Coincidence) of a text
-# def calculate_IC(frequencies, text_len):
-#     f = 0
-#     N = text_len * (text_len - 1)
-#     for v in frequencies.values():
-#         f += v * (v - 1)
-#     return f / N
 
 # Next step cycles though all keyword lengths of 2-30
 # and calculates Index of Coincidence
@@ -38,8 +19,7 @@ for n in range(2, 31):
     for i in range(n):
         section = text[i::n]
         freqs = tools.frequency_analysis(section)
-        section_len = len(section)
-        IC += tools.calculate_IC(freqs, section_len)
+        IC += tools.calculate_IC(freqs, len(section))
     # if average IC for keylength scores highly enough
     # then end loop early and move to next step
     # value can be tuned if it's not giving correct key length
@@ -68,7 +48,7 @@ for i in range(key_len):
 
 # runs quadgram scoring cycle twice
 # can be increased if correct key not found
-for counter in range(2):
+for _ in range(2):
     for i in range(key_len):
         for letter in alphabet:
             keyword[i] = letter

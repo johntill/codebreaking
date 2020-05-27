@@ -69,9 +69,9 @@ def periodic_IC(text):
     return key_scores
 
 def main():
-    text = tools.import_cipher('TCB Stage2.txt')
+    text = tools.import_cipher('Texts/Code_texts/vigtest2.txt')
     text_len = len(text)
-    ngrams_ev = tools.expected_values('english_monograms.txt', text_len)
+    ngrams_ev = tools.expected_values('Texts/Frequencies/english_monograms.txt', text_len)
     alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     
     print(f"\nText length: {text_len}")

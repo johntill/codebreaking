@@ -43,7 +43,7 @@ for i in range(key_len):
     for letter in alphabet:
         keyword[i] = letter
         plain_text = vigenere.Vigenere(keyword).decipher(text)
-        frequencies = tools.frequency_analysis(plain_text)
+        frequencies = tools.frequency_analysis(plain_text, alphabet)
         IC = tools.calculate_IC(frequencies, text_len)
         if IC >= best_IC:
             best_IC, best_letter = IC, letter

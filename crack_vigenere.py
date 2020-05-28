@@ -6,9 +6,12 @@ import code_vigenere as vigenere
 import cipher_tools as tools
 import ngram_score as ns
 
-fitness = ns.NgramScore('texts/Frequencies/english_quadgrams.txt')
+cipher_file = 'texts/Code_texts/vigtest2.txt'
+ngram_file = 'texts/Frequencies/english_quadgrams.txt'
 
-text = tools.import_cipher('texts/Code_texts/vigtest2.txt')
+fitness = ns.NgramScore(ngram_file)
+
+text = tools.import_cipher(cipher_file)
 
 # Next step cycles though all keyword lengths of 2-30
 # and calculates Index of Coincidence

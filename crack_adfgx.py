@@ -7,8 +7,8 @@ import ngram_score as ns
 from collections import defaultdict
 
 cipher_file = 'texts/Code_texts/adfgvxshort24.txt'
-mono_sub_ev_file = 'texts/Frequencies/english_monograms.txt'
-ngram_score_file = 'texts/Frequencies/english_quadgrams.txt'
+ev_file = 'texts/Frequencies/english_monograms.txt'
+ngram_file = 'texts/Frequencies/english_quadgrams.txt'
 
 # sets key length, if set to 1 will run section to
 # determine length of key automatically
@@ -180,9 +180,9 @@ def letter_expected_values(text_file, alphabet):
     ev_list = sorted(ngrams_ev, key=ngrams_ev.get)
     return ''.join(ev_list)
 
-ev_list = letter_expected_values(mono_sub_ev_file, alphabet)
+ev_list = letter_expected_values(ev_file, alphabet)
 frequencies = tools.frequency_analysis(cipher_text, alphabet)
-fitness = ns.NgramScore(ngram_score_file)
+fitness = ns.NgramScore(ngram_file)
 best_score = -10_000_000
 # sets sequence for randomly swapping letters in mono-sub phase
 alphabet_sequence = [*range(len(alphabet))]

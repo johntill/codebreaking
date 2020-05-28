@@ -7,6 +7,8 @@ from collections import defaultdict, Counter
 # Also offers to decrypt a Caesar cipher or test whether the cipher text
 # has a periodic IC which is the fingerprint of certain ciphers.
 
+cipher_file = 'texts/Code_texts/adfgvxshort24.txt'
+ev_file = 'texts/Frequencies/english_monograms.txt'
 
 # bi, tri and quad_gram frequencies use different methods
 # to create the frequencies dictionary and count
@@ -42,7 +44,7 @@ def print_freq_inc_nulls(frequencies, alphabet):
 
 # function that tries all 26 different possibilities of the Caesar cipher
 # then uses the Chi squared score of each to display the correct translation
-def caesar(text, ngrams_ev, shift):
+def score_caesar(text, ngrams_ev, shift):
     plaintext = caesar.Caesar(shift).decipher(text)
     freq = tools.frequency_analysis(plaintext)
     chi_two = tools.chi_squared(freq, ngrams_ev)    
@@ -62,16 +64,17 @@ def periodic_IC(text):
             freqs = tools.frequency_analysis(section)
             section_len = len(section)
             IC += tools.calculate_IC(freqs, section_len)
-        if (av_IC := IC / key_len) >= 0.06:
+        average_IC = IC / key_len
+        if average_IC >= 0.06:
             key_scores.append(key_len)
             spike = "***"
-        print(f"n = {key_len:02}, Average IC = {av_IC:.4f} {spike}")
+        print(f"n = {key_len:02}, Average IC = {average_IC:.4f} {spike}")
     return key_scores
 
 def main():
-    text = tools.import_cipher('Texts/Code_texts/vigtest2.txt')
+    text = tools.import_cipher(cipher_file)
     text_len = len(text)
-    ngrams_ev = tools.expected_values('Texts/Frequencies/english_monograms.txt', text_len)
+    ngrams_ev = tools.expected_values(ev_file, text_len)
     alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     
     print(f"\nText length: {text_len}")
@@ -139,7 +142,7 @@ def main():
         ask = input("\nAttempt Caesar Shift decryption? (y/n): ")
         if ask == 'y':
             print()
-            scores = [caesar(text, ngrams_ev, shift) for shift in range(26)]
+            scores = [score_caesar(text, ngrams_ev, shift) for shift in range(26)]
             best_shift = sorted(scores)[0][1]
             plain_text = caesar.Caesar(best_shift).decipher(text)
             print(f"\nOriginal shift = {alphabet[best_shift]} ({best_shift})\n")

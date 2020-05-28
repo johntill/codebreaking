@@ -1,4 +1,4 @@
-class ColTrans:
+class ColumnarTransposition:
 
     def __init__(self, key):
         self.key = key
@@ -19,16 +19,16 @@ class ColTrans:
 
     def decipher(self, text):
         text_len = len(text)
-        col_len = int(text_len / self.key_len)
+        column_len = text_len // self.key_len
         remainder = text_len % self.key_len
         plain = [None] * text_len
-        x = 0
+        position = 0
         for char in self.ord_key:
             i = self.key.index(char)
             if i < remainder:
-                new_col = col_len + 1
+                new_column = column_len + 1
             else:
-                new_col = col_len
-            plain[i::self.key_len] = text[x:x + new_col]
-            x += new_col
+                new_column = column_len
+            plain[i::self.key_len] = text[position:position + new_column]
+            position += new_column
         return ''.join(plain)

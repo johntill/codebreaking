@@ -13,7 +13,7 @@ def expected_values(filename, text_len=100):
     # and adjusts for length of text. If no text length
     # is given then converts to a percentage.
     ngrams_ev = {}
-    for line in open(filename, 'r'):
+    for line in open(filename, 'r', encoding='utf8', errors='ignore'):
         key, _, count = line.partition(' ')
         ngrams_ev[key] = float(count)
     N = sum(ngrams_ev.values())

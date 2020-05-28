@@ -6,24 +6,20 @@ import cipher_tools as tools
 import ngram_score as ns
 from collections import defaultdict
 
-cipher_text = tools.import_cipher('adfgvxshort24.txt')
+cipher_file = 'texts/Code_texts/adfgvxshort24.txt'
+mono_sub_ev_file = 'texts/Frequencies/english_monograms.txt'
+ngram_score_file = 'texts/Frequencies/english_quadgrams.txt'
 
-text_len = len(cipher_text)
 # sets key length, if set to 1 will run section to
 # determine length of key automatically
 key_len = 1
-# set make up of key square
-chars = 'ADFGVX' # ADFGX or ADFGVX
 
-# sets alphabet for inside key square
-#alphabet = 'ABCDEFGHIKLMNOPQRSTUVWXYZ' # ADFGX
-alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' # ADFGVX
 
-# sets sequence for randomly swapping letters in mono-sub phase
-alphabet_sequence = [*range(len(alphabet))]
+cipher_text = tools.import_cipher(cipher_file)
+text_len = len(cipher_text)
 
 def score_key(key, ngram_size):
-    plain_text = ct.ColTrans(key).decipher(cipher_text)
+    plain_text = ct.ColumnarTransposition(key).decipher(cipher_text)
     n_grams = tools.ngram_freq_counter(plain_text, ngram_size, 2)
     IC = tools.calculate_IC(n_grams, text_len / 2)
     if IC > best_score:
@@ -130,38 +126,47 @@ print(record_key)
 # set to run for max of 9 rounds to minimise wasted time on shorter keys
 # but still be ~ 99.9% accurate on longer keys
 
-# best_score = record_score
-# key = list(zip(*[iter(record_key)]*2))
-# key_len = len(key)
-# for x in range(0, key_len - 1, 2):
-#      key[x+1], key[x] = key[x], key[x+1]
-# key = list(zip(*[iter(key)]*2))
-# key_len = len(key)
-# iter1 = itertools.permutations(key, key_len)
-# for new_key in iter1:
-#     new_key = [x for y in new_key for x in y]
-#     key_len = len(new_key)
-#     for x in range(0, key_len - 1, 2):
-#         key = [*new_key]
-#         key[x+1], key[x] = key[x], key[x+1]
-#         key = [x for y in key for x in y]
-#         best_key, best_score, flag = score_key(key, 4)
-#     if best_score > record_score:
-#         record_score, record_key = best_score, [*best_key]
-#         break
+best_score = record_score
+key = list(zip(*[iter(record_key)]*2))
+key_len = len(key)
+for x in range(0, key_len - 1, 2):
+     key[x+1], key[x] = key[x], key[x+1]
+key = list(zip(*[iter(key)]*2))
+key_len = len(key)
+iter1 = itertools.permutations(key, key_len)
+for new_key in iter1:
+    new_key = [x for y in new_key for x in y]
+    key_len = len(new_key)
+    for x in range(0, key_len - 1, 2):
+        key = [*new_key]
+        key[x+1], key[x] = key[x], key[x+1]
+        key = [x for y in key for x in y]
+        best_key, best_score, flag = score_key(key, 4)
+    if best_score > record_score:
+        record_score, record_key = best_score, [*best_key]
+        break
 
-# print(record_key)
+print(record_key)
 
 print(record_score)
 # undoes transposition using record key
-phase2_text = ct.ColTrans(record_key).decipher(cipher_text)
+phase2_text = ct.ColumnarTransposition(record_key).decipher(cipher_text)
+
+# sets alphabet for inside key square
+def set_alphabet(chars):
+    if len(chars) == 5: # ADFGX
+        return 'ABCDEFGHIKLMNOPQRSTUVWXYZ'
+    elif len(chars) == 6: # ADFGVX
+        return 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+
+chars = ''.join(sorted(set(cipher_text)))
+alphabet = set_alphabet(chars)
+
 # undoes Polybius Square using alphabet as key
 # so text is ready for substitution phase
 cipher_text = ps.PolybiusSquare(alphabet, chars).decipher(phase2_text)
 
 # 2nd part of program to undo substitution phase
-
-frequencies = tools.frequency_analysis(cipher_text, alphabet)
 
 def letter_expected_values(text_file, alphabet):
     ngrams_ev = {}
@@ -175,7 +180,12 @@ def letter_expected_values(text_file, alphabet):
     ev_list = sorted(ngrams_ev, key=ngrams_ev.get)
     return ''.join(ev_list)
 
-ev_list = letter_expected_values('english_monograms.txt', alphabet)
+ev_list = letter_expected_values(mono_sub_ev_file, alphabet)
+frequencies = tools.frequency_analysis(cipher_text, alphabet)
+fitness = ns.NgramScore(ngram_score_file)
+best_score = -10_000_000
+# sets sequence for randomly swapping letters in mono-sub phase
+alphabet_sequence = [*range(len(alphabet))]
 
 def set_key(frequencies, ev_list):
     key_list = sorted(frequencies, key=frequencies.get)
@@ -193,9 +203,6 @@ def swap_letters(key):
     x, y = random.sample(alphabet_sequence, 2)
     key[y], key[x] = key[x], key[y]
     return key
-
-fitness = ns.NgramScore('english_quadgrams.txt')
-best_score = -10_000_000
 
 for x in range(6):
     current_key = set_key(frequencies, ev_list)

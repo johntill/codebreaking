@@ -42,7 +42,7 @@ def print_freq_inc_nulls(frequencies, alphabet):
 
 # function that tries all 26 different possibilities of the Caesar cipher
 # then uses the Chi squared score of each to display the correct translation
-def caesar(text, ngrams_ev, shift):
+def score_caesar(text, ngrams_ev, shift):
     plaintext = caesar.Caesar(shift).decipher(text)
     freq = tools.frequency_analysis(plaintext)
     chi_two = tools.chi_squared(freq, ngrams_ev)    
@@ -60,8 +60,7 @@ def periodic_IC(text):
         for i in range(key_len):
             section = text[i::key_len]
             freqs = tools.frequency_analysis(section)
-            section_len = len(section)
-            IC += tools.calculate_IC(freqs, section_len)
+            IC += tools.calculate_IC(freqs, len(section))
         if (av_IC := IC / key_len) >= 0.06:
             key_scores.append(key_len)
             spike = "***"
@@ -139,7 +138,7 @@ def main():
         ask = input("\nAttempt Caesar Shift decryption? (y/n): ")
         if ask == 'y':
             print()
-            scores = [caesar(text, ngrams_ev, shift) for shift in range(26)]
+            scores = [score_caesar(text, ngrams_ev, shift) for shift in range(26)]
             best_shift = sorted(scores)[0][1]
             plain_text = caesar.Caesar(best_shift).decipher(text)
             print(f"\nOriginal shift = {alphabet[best_shift]} ({best_shift})\n")

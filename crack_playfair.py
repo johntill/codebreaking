@@ -12,7 +12,7 @@ import cipher_tools as tools
 import ngram_score as ns
 import itertools
 
-cipher_file = 'texts/Code_texts/playtest2.txt'
+cipher_file = 'texts/Code_texts/TCB Stage6.txt'
 ngram_file = 'texts/Frequencies/english_quintgrams.txt'
 
 # imports scoring mechanism
@@ -82,16 +82,38 @@ def randomly_mutate(key, options):
     else:
         return swap_letters(key)
 
+def swap_all_elements(key):
+    perms = itertools.combinations(range(25),2)
+    for x, y in perms:
+        key[x], key[y] = key[y], key[x]
+        yield key
+
+def swap_all_rows(key):
+    perms = itertools.permutations(range(0,25,5),5)
+    new_key = [None] * 25
+    for perm in perms:
+        for i in range(5):
+            new_key[i*5:i*5+5] = key[perm[i]:perm[i]+5]
+        yield new_key
+
+def swap_all_columns(key):
+    perms = itertools.permutations(range(5),5)
+    new_key = [None] * 25
+    for perm in perms:
+        for i in range(5):
+            new_key[i::5] = key[perm[i]::5]
+        yield new_key
+
 solutions = {}
 results = []
 
 options = ({0: T_B_mirror, 1: L_R_mirror, 2: TR_BL_mirror, 3: TL_BR_mirror,
             4: swap_columns, 5: swap_columns, 6: swap_rows, 7: swap_rows})
 
-for number in range(1, 10):
+for number in range(1, 21):
     print(f'Number: {number:02}')
     # sets initial temperature for simulated annealing
-    T = 8
+    T = 10
     stages = 0
     best_stage = 0
     blank_stages = 0
@@ -101,8 +123,8 @@ for number in range(1, 10):
     best_score = fitness.score(plain_text)
 
 #    while T > 0:
-#    while best_score < -2956 and stages < 20:
-    while stages < 50:
+    while best_score < -3517 and stages < 16: # -2956 quadgrams
+#    while stages < 20:
         stages += 1
         print(f"Stage: {stages}, Blank Stages: {blank_stages}")
         current_key = [*best_key]
@@ -124,45 +146,33 @@ for number in range(1, 10):
                 # if a new best score is found, perform all swaps
                 # letters, then rows, then columns until no improvement
                 while flag:
-                    iter1 = itertools.combinations(range(25),2)
-                    iter2 = itertools.combinations(range(0,25,5),2)
-                    iter3 = itertools.combinations(range(5),2)
                     flag = False
                     # cycles through all letter swaps sequentially
-                    for x, y in iter1:
-                        key = [*best_key]
-                        key[y], key[x] = key[x], key[y]
+                    for key in swap_all_elements([*best_key]):
                         plain_text = playfair.Playfair(key).decipher(cipher_text)
                         candidate_score = fitness.score(plain_text)
                         if candidate_score > best_score:
                             best_score, best_key = candidate_score, [*key]
                             flag = True
                             break
-
                     # cycles through all row swaps sequentially
-                    for x, y in iter2:
-                        key = [*best_key]
-                        key[y:y+5], key[x:x+5] = key[x:x+5], key[y:y+5]
+                    for key in swap_all_rows([*best_key]):
                         plain_text = playfair.Playfair(key).decipher(cipher_text)
                         candidate_score = fitness.score(plain_text)
                         if candidate_score > best_score:
                             best_score, best_key = candidate_score, [*key]
                             flag = True
                             break
-
                     # cycles through all column swaps sequentially
-                    for x, y in iter3:
-                        key = [*best_key]
-                        key[y::5], key[x::5] = key[x::5], key[y::5]
+                    for key in swap_all_columns([*best_key]):
                         plain_text = playfair.Playfair(key).decipher(cipher_text)
                         candidate_score = fitness.score(plain_text)
                         if candidate_score > best_score:
                             best_score, best_key = candidate_score, [*key]
                             flag = True
                             break
-                    
-                    best_stage = stages
 
+                best_stage = stages
                 key = ''.join(best_key)
                 for i in range(0, 25, 5):
                     print(key[i:i+5])

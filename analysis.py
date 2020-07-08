@@ -90,24 +90,25 @@ def main():
     print(f"IC value: {IC}")
 
     bi_gram = bi_gram_freq(text, text_len)
-    bi_IC = tools.calculate_IC(bi_gram, text_len)
-    print(f"Bigram IC value: {bi_IC}")
+    bigram_IC = tools.calculate_IC(bi_gram, text_len)
+    print(f"Bigram IC value: {bigram_IC}")
 
     tri_gram = tri_gram_freq(text, text_len)
-    tri_IC = tools.calculate_IC(tri_gram, text_len)
-    print(f"Trigram IC value: {tri_IC}")
+    trigram_IC = tools.calculate_IC(tri_gram, text_len)
+    print(f"Trigram IC value: {trigram_IC}")
 
     quad_gram = quad_gram_freq(text, text_len)
-    quad_IC = tools.calculate_IC(quad_gram, text_len)
-    print(f"Quadgram IC value: {quad_IC}")
+    quadgram_IC = tools.calculate_IC(quad_gram, text_len)
+    print(f"Quadgram IC value: {quadgram_IC}")
 
     if freq_len == 2:
         print("The cipher is likely Baconian")
-    elif freq_len < 10 and bi_IC > 0.06:
-        print("The cipher is likely a polybius square cipher")
-        print("and should be solvable via frequency analysis")
-    elif freq_len < 10 and bi_IC < 0.06:
-        print("The cipher is likely an ADFGX, ADFGVX or a variant")
+    elif freq_len < 10:
+        if bigram_IC > 0.06:
+            print("The cipher is likely a polybius square cipher")
+            print("and should be solvable via frequency analysis")
+        else:
+            print("The cipher is likely an ADFGX, ADFGVX or a variant")
     elif freq_len > 26:
         print("The cipher is likely either a homophonic substituion cipher")
         print("or is using codewords as well as substitution")

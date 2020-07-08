@@ -1,6 +1,6 @@
-# import timeit
+import timeit
 
-# code_to_test = """
+code_to_test = """
 # code to brute force Playfair cipher using simulated annealing
 
 import itertools
@@ -10,7 +10,7 @@ import code_playfair as playfair
 import cipher_tools as tools
 import ngram_score as ns
 
-cipher_file = 'texts/Code_texts/playtest2.txt'
+cipher_file = 'texts/Code_texts/TCB Stage6.txt'
 ngram_file = 'texts/Frequencies/english_quintgrams.txt'
 
 # imports scoring mechanism
@@ -24,28 +24,28 @@ cipher_text = tools.import_cipher(cipher_file)
 alphabet = "ABCDEFGHIKLMNOPQRSTUVWXYZ"
 # sets sequence to use for generating random numbers
 # needed to avoid trying to swap same element
-alphabet_sequence = [*range(len(alphabet))]
 
 def swap_all_elements(key):
     perms = itertools.combinations(range(25),2)
     for x, y in perms:
-        key[x], key[y] = key[y], key[x]
-        yield key
+        new_key = [*key]
+        new_key[x], new_key[y] = key[y], key[x]
+        yield new_key
 
 def swap_all_rows(key):
     perms = itertools.permutations(range(0,25,5),5)
     new_key = [None] * 25
     for perm in perms:
-        for i in range(5):
-            new_key[i*5:i*5+5] = key[perm[i]:perm[i]+5]
+        for index, value in enumerate(perm):
+            new_key[index*5:index*5+5] = key[value:value+5]
         yield new_key
 
 def swap_all_columns(key):
     perms = itertools.permutations(range(5),5)
     new_key = [None] * 25
     for perm in perms:
-        for i in range(5):
-            new_key[i::5] = key[perm[i]::5]
+        for index, value in enumerate(perm):
+            new_key[index::5] = key[value::5]
         yield new_key
 
 def swap_row_elements(key):
@@ -53,8 +53,8 @@ def swap_row_elements(key):
         new_key = [*key]
         perms = itertools.permutations(range(5),5)
         for perm in perms:
-            for j in range(5):
-                new_key[i+j] = key[i+perm[j]]
+            for index, value in enumerate(perm):
+                new_key[i+index] = key[i+value]
             yield new_key
 
 def swap_column_elements(key):
@@ -62,8 +62,8 @@ def swap_column_elements(key):
         new_key = [*key]
         perms = itertools.permutations(range(0,25,5),5)       
         for perm in perms:
-            for j in range(5):
-                new_key[i+j*5] = key[i+perm[j]]
+            for index, value in enumerate(perm):
+                new_key[i+index*5] = key[i+value]
             yield new_key
 
 def score_key(key):
@@ -82,25 +82,28 @@ results = []
 options = ([swap_all_elements, swap_all_rows, swap_all_columns,
             swap_row_elements, swap_column_elements])
 
-for number in range(1, 10):
+# creates random initial key from alphabet
+
+
+solutions = {}
+results = []
+
+
+for number in range(1, 2):
     print(f'Number: {number:02}')
     # sets initial temperature for simulated annealing
-    T = 20000
+    T = 8
     stages = 0
     best_stage = 0
     blank_stages = 0
-# creates random initial key from alphabet
     best_key = random.sample(alphabet, 25)
-    plain_text = playfair.Playfair(best_key).decipher(cipher_text)
-    best_score = fitness.score(plain_text)
+    best_score, plain_text = score_key(best_key)
+    current_key = [*best_key]
+    current_score, plain_text = score_key(current_key)
 
-    while stages < 50:
+    while best_score < -3517 and stages < 100:
         stages += 1
         print(f"Stage: {stages}, Blank Stages: {blank_stages}")
-        current_key = [*best_key]
-        plain_text = playfair.Playfair(current_key).decipher(cipher_text)
-        current_score = fitness.score(plain_text)
-
         for option in options:
             for key in option(current_key):
                 candidate_score, plain_text = score_key(key)
@@ -110,6 +113,7 @@ for number in range(1, 10):
                     #print(plain_text)
                 if current_score > best_score:
                     best_score, best_key = current_score, [*current_key]
+                    best_stage = stages
                     print_key(best_key)
                     print(plain_text)
                     print(best_score)
@@ -128,7 +132,7 @@ for number, key in solutions.items():
 for (number, best_stage, best_score) in results:
     print(f"{number:02} = Best Stage: {best_stage:02} - Best Score: {best_score}")
 
-# """
+"""
 
-# elapsed_time = timeit.timeit(code_to_test, number = 1)#/1000
-# print(elapsed_time)
+elapsed_time = timeit.timeit(code_to_test, number = 1)#/1000
+print(elapsed_time)

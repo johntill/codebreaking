@@ -3,14 +3,12 @@ import timeit
 code_to_test = """
 # code to brute force Playfair cipher using simulated annealing
 
-import re
-import string
-import random
+import itertools
 import math
+import random
 import code_playfair as playfair
 import cipher_tools as tools
 import ngram_score as ns
-import itertools
 
 cipher_file = 'texts/Code_texts/TCB Stage6.txt'
 ngram_file = 'texts/Frequencies/english_quintgrams.txt'
@@ -85,52 +83,60 @@ def randomly_mutate(key, options):
 def swap_all_elements(key):
     perms = itertools.combinations(range(25),2)
     for x, y in perms:
-        key[x], key[y] = key[y], key[x]
-        yield key
+        new_key = [*key]
+        new_key[x], new_key[y] = key[y], key[x]
+        yield new_key
 
 def swap_all_rows(key):
     perms = itertools.permutations(range(0,25,5),5)
     new_key = [None] * 25
     for perm in perms:
-        for i in range(5):
-            new_key[i*5:i*5+5] = key[perm[i]:perm[i]+5]
+        for index, value in enumerate(perm):
+            new_key[index*5:index*5+5] = key[value:value+5]
         yield new_key
 
 def swap_all_columns(key):
     perms = itertools.permutations(range(5),5)
     new_key = [None] * 25
     for perm in perms:
-        for i in range(5):
-            new_key[i::5] = key[perm[i]::5]
+        for index, value in enumerate(perm):
+            new_key[index::5] = key[value::5]
         yield new_key
+
+def print_key(key):
+    show_key = ''.join(key)
+    for i in range(0, 25, 5):
+        print(show_key[i:i+5])
+    print()
 
 solutions = {}
 results = []
 
-options = ({0: T_B_mirror, 1: L_R_mirror, 2: TR_BL_mirror, 3: TL_BR_mirror,
-            4: swap_columns, 5: swap_columns, 6: swap_rows, 7: swap_rows})
+option_choices = ({T_B_mirror: [0], L_R_mirror: [1], TR_BL_mirror: [2, 3],
+                   swap_columns: [4, 5], swap_rows: [6,7]})
+
+options = {value: key for key in option_choices for value in option_choices[key]}
 
 for number in range(1, 21):
     print(f'Number: {number:02}')
     # sets initial temperature for simulated annealing
-    T = 10
+    T = 9
     stages = 0
     best_stage = 0
     blank_stages = 0
-# creates random initial key from alphabet
+    # creates random initial key from alphabet
     best_key = random.sample(alphabet, 25)
     plain_text = playfair.Playfair(best_key).decipher(cipher_text)
     best_score = fitness.score(plain_text)
-
+    current_key = [*best_key]
+    plain_text = playfair.Playfair(current_key).decipher(cipher_text)
+    current_score = fitness.score(plain_text)
+    
 #    while T > 0:
     while best_score < -3517 and stages < 16: # -2956 quadgrams
 #    while stages < 20:
         stages += 1
         print(f"Stage: {stages}, Blank Stages: {blank_stages}")
-        current_key = [*best_key]
-        plain_text = playfair.Playfair(current_key).decipher(cipher_text)
-        current_score = fitness.score(plain_text)
-
         for i in range(9999):
             # performs random transformation of current key
             key = randomly_mutate([*current_key], options)
@@ -173,10 +179,8 @@ for number in range(1, 21):
                             break
 
                 best_stage = stages
-                key = ''.join(best_key)
-                for i in range(0, 25, 5):
-                    print(key[i:i+5])
-                plain_text = playfair.Playfair(key).decipher(cipher_text)
+                print_key(best_key)
+                plain_text = playfair.Playfair(best_key).decipher(cipher_text)
                 print(plain_text)
                 print(best_score)
                 print(T)
@@ -191,10 +195,8 @@ for number in range(1, 21):
 
 for number, key in solutions.items():
     print(f'Solution: {number:02}')
-    key = ''.join(key)
+    print_key(key)
     plain_text = playfair.Playfair(key).decipher(cipher_text)
-    for i in range(0, 25, 5):
-        print(key[i:i+5])
     print(plain_text)
     print()
 

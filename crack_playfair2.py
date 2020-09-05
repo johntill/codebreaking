@@ -88,13 +88,11 @@ options = ([swap_all_elements, swap_all_rows, swap_all_columns,
 solutions = {}
 results = []
 
-
 for number in range(1, 2):
     print(f'Number: {number:02}')
     # sets initial temperature for simulated annealing
     T = 8
     stages = 0
-    best_stage = 0
     blank_stages = 0
     best_key = random.sample(alphabet, 25)
     best_score, plain_text = score_key(best_key)

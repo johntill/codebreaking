@@ -4,9 +4,11 @@ code_to_test = """
 import re
 import itertools
 
-with open("enigmacipher2.txt") as f:
+cipher_file = 'texts/Code_texts/enigmacipherJG.txt'
+
+with open(cipher_file) as f:
     text = f.read()
-#text = re.sub('[^A-Z]','', text.upper())
+text = re.sub('[^A-Z]','', text.upper())
 text_len = len(text)
 
 #settings=('J','J','T')

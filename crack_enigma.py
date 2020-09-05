@@ -11,14 +11,6 @@ with open(cipher_file) as f:
 text = re.sub('[^A-Z]','', text.upper())
 text_len = len(text)
 
-#settings=('J','J','T')
-#rotors=(2,3,4)
-#reflector='B'
-#ringstellung=('Y','N','K')
-#steckers=[('P','O'),('M','L'),
-#('I','U'),('K','J'),('N','H'),('Y','T'),('G','B'),('V','F'),
-#('R','E'),('D','C')]
-
 letters = {'A':0,'B':1,'C':2,'D':3,'E':4,'F':5,'G':6,'H':7,
    'I':8,'J':9,'K':10,'L':11,'M':12,'N':13,'O':14,'P':15,'Q':16,
    'R':17,'S':18,'T':19,'U':20,'V':21,'W':22,'X':23,'Y':24,'Z':25}
@@ -42,13 +34,17 @@ invrotor = ["UWYGADFPVZBECKMTHXSLRINQOJ",
             "SKXQLHCNWARVGMEBJPTYFDZUIO",
             "QMGYVPEDRCWTIANUXFKZOSLHJB",
             "QJINSAYDVKBFRUHMCPLEWZTGXO"]
-reflectorkey = ["EJMZALYXVBWFCRQUONTSPIKHGD",
-                "YRUHQSLDPXNGOKMIEBFZCWVJAT",
-                "FVPJIAOYEDRZXWGCTKUQSBNMHL"]
 
 for r in range(len(rotorkey)):
     rotorkey[r] = [letters[i] for i in rotorkey[r]]
     invrotor[r] = [letters[i] for i in invrotor[r]]
+
+reflectorkey = ["EJMZALYXVBWFCRQUONTSPIKHGD",
+                "YRUHQSLDPXNGOKMIEBFZCWVJAT",
+                "FVPJIAOYEDRZXWGCTKUQSBNMHL"]
+
+reflector = 'B'
+reflector = [letters[i] for i in reflectorkey[letters[reflector]]]
 
 #notch = (('Q',),('E',),('V',),('J',),('Z',),('Z','M'),('Z','M'),('Z','M'))
 notch = ((16,),(4,),(21,),(9,),(25,),(25,12),(25,12),(25,12))
@@ -98,19 +94,13 @@ def calculate_IC(frequencies, text_len):
 def frequency_analysis(text):
     return {char : text.count(char) for char in set(text)}
 
-#settings = ('J', 'J', 'T')
-#rotors = (2, 3, 4)
-reflector = 'B'
-reflector = [letters[i] for i in reflectorkey[letters[reflector]]]
-ringstellung = ('A', 'A', 'A')
-ringstellung = [letters[i] for i in ringstellung]
-steckers = []
-
-poss_rotors = itertools.permutations(range(5), 3)
-
 text = [letters[i] for i in text]
 
+ringstellung = ('A', 'A', 'A')
+ringstellung = [letters[i] for i in ringstellung]
 results = []
+poss_rotors = itertools.permutations(range(5), 3)
+
 for rotors in poss_rotors:
     print(rotors)
     poss_settings = itertools.product(range(26), repeat=3)
@@ -126,8 +116,7 @@ results = sorted(results, reverse = True)
 print(results[:50])
 print(len(results))
 
-#initsettings = [2, 21, 20]
-#rotors = (3, 4, 1)
+
 IC, rotors, initsettings = results[0]
 #ringstellung = [0, 0, 0]
 settings = [*initsettings]
@@ -136,29 +125,25 @@ frequencies = frequency_analysis(plain)
 IC = calculate_IC(frequencies, text_len)
 
 for r in range(2, 0, -1):
-    ring_results = 0
+    best_IC = 0
     for n in range(26):
         settings = [*initsettings]
-        #print(settings, ringstellung, n)
         ringstellung[r] = n
         settings[r] = (settings[r] + n) % 26
-        print(settings, ringstellung, n)
         plain = [encipher_char(c) for c in text]
         frequencies = frequency_analysis(plain)
         IC = calculate_IC(frequencies, text_len)
-        #print(IC)
-        if IC > ring_results:
-            ring_results = IC
+        if IC > best_IC:
+            best_IC = IC
             best_n = n
-            print(n, IC)
     initsettings[r] = (initsettings[r] + best_n) % 26
     ringstellung[r] = best_n
 
 print(initsettings, ringstellung)
+
 settings = initsettings
 plain = [arr[ch] for ch in plain]
 plain = ''.join(plain)
-
 print(plain)
 
 """

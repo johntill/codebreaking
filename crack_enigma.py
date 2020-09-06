@@ -116,7 +116,6 @@ results = sorted(results, reverse = True)
 print(results[:50])
 print(len(results))
 
-
 IC, rotors, initsettings = results[0]
 #ringstellung = [0, 0, 0]
 settings = [*initsettings]

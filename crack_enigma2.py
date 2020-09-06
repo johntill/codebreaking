@@ -99,6 +99,7 @@ results = []
 poss_rotors = itertools.permutations(range(5), 3)
 
 for rotors in poss_rotors:
+    print(rotors)
     poss_settings = itertools.product(range(26), repeat=3)
     for settings in poss_settings:
         initsettings = tuple(settings)
@@ -108,7 +109,12 @@ for rotors in poss_rotors:
         IC = calculate_IC(frequencies, N)
         results.append((IC, rotors, initsettings))
 
-results = sorted(results, reverse = True)
+results = sorted(results, reverse=True)
+
+from csv import writer
+with open('enigma_results.csv, 'w', newline='') as f:
+    wr = writer(f)
+    wr.writerows(results)
 
 check_set = set()
 new_results = []
@@ -120,33 +126,61 @@ for result in results:
         if len(check_set) == 6:
             break
 
-print(new_results)
+results = []
+for result in new_results:
+    best_IC, rotors, init_settings = result
+    init_settings = list(init_settings)
+    ringstellung = [0, 0, 0]
+    highest_IC = 0
+    for r in (2):
+        for n in range(26):
+            settings = [*init_settings]
+            ringstellung[r] = n
+            settings[r] = (settings[r] + n) % 26
+            plain = [encipher_char(ch) for ch in text]
+            frequencies = frequency_analysis(plain)
+            IC = calculate_IC(frequencies, N)
+            if IC > highest_IC:
+                highest_IC = IC
+                highest_n = n
+        init_settings[r] = (init_settings[r] + highest_n) % 26
+        ringstellung[r] = highest_n
+    individual_result = (rotors, best_IC, init_settings, ringstellung, highest_IC, highest_IC - best_IC)
+    print(individual_result)
+    results.append(individual_result)
 
-best_IC, rotors, init_settings = new_results[0]
-ringstellung = [0, 0, 0]
-init_settings = list(init_settings)
-best_n = 0
+results = sorted(results, reverse=True, key=lambda x: x[1])
+print()
+for result in results:
+    print(result)
 
-for r in (2, 1):
-    for n in range(26):
-        settings = [*init_settings]
-        ringstellung[r] = n
-        settings[r] = (settings[r] + n) % 26
-        plain = [encipher_char(ch) for ch in text]
-        frequencies = frequency_analysis(plain)
-        IC = calculate_IC(frequencies, N)
-        if IC > best_IC:
-            best_IC = IC
-            best_n = n
-    init_settings[r] = (init_settings[r] + best_n) % 26
-    ringstellung[r] = best_n
+# best_IC, rotors, init_settings = new_results[0]
+# ringstellung = [0, 0, 0]
+# init_settings = list(init_settings)
+# best_n = 0
 
-print(init_settings, ringstellung)
+# for r in (2, 1):
+#     for n in range(26):
+#         settings = [*init_settings]
+#         ringstellung[r] = n
+#         settings[r] = (settings[r] + n) % 26
+#         plain = [encipher_char(ch) for ch in text]
+#         frequencies = frequency_analysis(plain)
+#         IC = calculate_IC(frequencies, N)
+#         if IC > best_IC:
+#             best_IC = IC
+#             best_n = n
+#     init_settings[r] = (init_settings[r] + best_n) % 26
+#     ringstellung[r] = best_n
 
-settings = init_settings
-plain = [arr[ch] for ch in plain]
-plain = ''.join(plain)
-print(plain)
+# settings = init_settings
+# plain = [arr[ch] for ch in plain]
+# frequencies = frequency_analysis(plain)
+# IC = calculate_IC(frequencies, N)
+
+# print(IC, init_settings, ringstellung)
+# plain = ''.join(plain)
+# print(plain)
 
 """
 

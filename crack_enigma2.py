@@ -93,7 +93,6 @@ def frequency_analysis(text):
 text = [letters[i] for i in text]
 N = text_len * (text_len - 1)
 
-
 ringstellung = (0, 0, 0)
 results = []
 poss_rotors = itertools.permutations(range(5), 3)
@@ -111,10 +110,14 @@ for rotors in poss_rotors:
 
 results = sorted(results, reverse=True)
 
-from csv import writer
-with open('enigma_results.csv, 'w', newline='') as f:
-    wr = writer(f)
-    wr.writerows(results)
+def save_results(results):
+    from csv import writer
+    with open('enigma_results.csv', 'w', newline='') as f:
+        wr = writer(f)
+        wr.writerows(results)
+
+# Optional line to save results list to csv file
+# save_results(results)
 
 check_set = set()
 new_results = []
@@ -132,7 +135,7 @@ for result in new_results:
     init_settings = list(init_settings)
     ringstellung = [0, 0, 0]
     highest_IC = 0
-    for r in (2):
+    for r in range(2, 3):
         for n in range(26):
             settings = [*init_settings]
             ringstellung[r] = n

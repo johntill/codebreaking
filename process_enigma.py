@@ -3,8 +3,10 @@ import timeit
 code_to_test = """
 import csv
 import re
+from collections import defaultdict
 
-filename = 'enigma_results.csv'
+cipher_file = 'texts/Code_texts/enigma_medium.txt'
+results_file = 'results/results_enigma_medium.csv'
 
 def assign_type(row):
     IC = float(row[0])
@@ -12,13 +14,16 @@ def assign_type(row):
     settings = [int(s) for s in re.findall(r'\d+', row[2])]
     return IC, rotors, settings
 
-with open(filename) as f:
-    data = list(csv.reader(f))
-    results = [assign_type(row) for row in data]
+def append_row(row):
+    count_rotors[row[1]] += 1
+    return assign_type(row)
+
+with open(results_file) as f:
+    data = csv.reader(f)
+    count_rotors = defaultdict(int)
+    results = [append_row(row) for row in data if count_rotors[row[1]] < 20]
 
 import itertools
-
-cipher_file = 'texts/Code_texts/enigmacipherJG.txt'
 
 with open(cipher_file) as f:
     text = f.read()
@@ -111,18 +116,6 @@ def frequency_analysis(text):
 text = [letters[i] for i in text]
 N = text_len * (text_len - 1)
 
-check_set = set()
-new_results = []
-
-for result in results:
-    if result[1] not in check_set:
-        check_set.add(result[1])
-        new_results.append(result)
-        print(result)
-        if len(check_set) == 6:
-            break
-
-results = results[:1000]
 results2 = []
 for result in results:
     best_IC, rotors, init_settings = result
@@ -151,20 +144,36 @@ print()
 for result in results2[:30]:
     print(result)
 
-rotors, _, init_settings, ringstellung, best_IC, _ = results2[0]
-for i in range(26):
-    if i != 4:
-        steckers = [(4, i)]
-        settings = [*init_settings]
-        plain = [encipher_char(ch) for ch in text]
-        frequencies = frequency_analysis(plain)
-        IC = calculate_IC(frequencies, N)
-        print(IC, steckers)
-        if IC > best_IC:
-            best_IC = IC
-            best_steckers = steckers
+stecker_result = []
+for result in results2:
+    rotors, _, init_settings, ringstellung, best_IC, _ = result
+    highest_IC = best_IC
+    for i in range(26):
+        if i != 4:
+            steckers = [(4, i)]
+            settings = [*init_settings]
+            plain = [encipher_char(ch) for ch in text]
+            frequencies = frequency_analysis(plain)
+            IC = calculate_IC(frequencies, N)
+            if IC > best_IC:
+                best_IC = IC
+                best_steckers = steckers
+    result = (rotors, init_settings, ringstellung, highest_IC, best_steckers, best_IC, best_IC-highest_IC)
+    stecker_result.append(result)
 
-print(IC, best_steckers)
+stecker_result = sorted(stecker_result, reverse=True, key=lambda x: x[6])
+
+for result in stecker_result[:30]:
+    print(result)
+
+# settings = init_settings
+# plain = [arr[ch] for ch in plain]
+# frequencies = frequency_analysis(plain)
+# IC = calculate_IC(frequencies, N)
+
+# print(IC, init_settings, ringstellung)
+# plain = ''.join(plain)
+# print(plain)
 """
 
 elapsed_time = timeit.timeit(code_to_test, number = 1)#/1000

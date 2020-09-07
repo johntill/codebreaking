@@ -1,3 +1,6 @@
+import timeit
+
+code_to_test = """
 import csv
 import re
 from collections import defaultdict
@@ -11,30 +14,16 @@ def assign_type(row):
     return IC, rotors, settings
 
 def append_row(row):
-    row = assign_type(row)
-    # print(row)
-    rotors = row[1]
-    count_rotors[rotors] += 1
-    if count_rotors[rotors] < 21:
-        return row
-
-# count_rotors = defaultdict(int)
+    count_rotors[row[1]] += 1
+    return assign_type(row)
 
 with open(filename) as f:
     data = csv.reader(f)
-    # results = [assign_type(row) for row in data]
     count_rotors = defaultdict(int)
-    # results = []
-    # for row in data:
-    #     row = assign_type(row)
-    #     rotors = row[1]
-    #     count_rotors[rotors] += 1
-    #     if count_rotors[rotors] < 21:
-    #         results.append(row)
-    results = [append_row(row)for row in data]
+    results = [append_row(row) for row in data if count_rotors[row[1]] < 20]
 
-print(len(results))
 
-for row in results:
-    if row[1] == (4,3,1):
-        print(row)
+"""
+
+elapsed_time = timeit.timeit(code_to_test, number = 1)#/1000
+print(elapsed_time)

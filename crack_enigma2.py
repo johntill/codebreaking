@@ -4,7 +4,8 @@ code_to_test = """
 import re
 import itertools
 
-cipher_file = 'texts/Code_texts/enigmacipherJG.txt'
+cipher_file = 'texts/Code_texts/enigma_medium.txt'
+results_file = 'results/results_enigma_medium.csv'
 
 with open(cipher_file) as f:
     text = f.read()
@@ -56,21 +57,12 @@ def advance_rotor():
         settings[1] = (settings[1] + 1) % 26
     settings[2] = (settings[2] + 1) % 26
 
-def apply_steckers(ch):
-    for i in steckers:
-        if ch == i[0]:
-            return i[1]
-        if ch == i[1]:
-            return i[0]
-    return ch
-
 def apply_rotor(ch, key, offset):
     ch = (ch + offset) % 26
     return (key[ch] - offset) % 26
 
 def encipher_char(ch):
     advance_rotor()
-    #ch = apply_steckers(ch)
     for i in (2, 1, 0):
         offset = settings[i] - ringstellung[i]
         ch = apply_rotor(ch, rotorkey[rotors[i]], offset)
@@ -78,7 +70,6 @@ def encipher_char(ch):
     for i in (0, 1, 2):
         offset = settings[i] - ringstellung[i]
         ch = apply_rotor(ch, invrotor[rotors[i]], offset)
-    #ch = apply_steckers(ch)
     return ch
 
 def calculate_IC(frequencies, N):
@@ -110,80 +101,14 @@ for rotors in poss_rotors:
 
 results = sorted(results, reverse=True)
 
-def save_results(results):
+def save_results(results_file, results):
     from csv import writer
-    with open('enigma_results.csv', 'w', newline='') as f:
+    with open(results_file, 'w', newline='') as f:
         wr = writer(f)
         wr.writerows(results)
 
 # Optional line to save results list to csv file
-# save_results(results)
-
-check_set = set()
-new_results = []
-
-for result in results:
-    if result[1] not in check_set:
-        check_set.add(result[1])
-        new_results.append(result)
-        if len(check_set) == 6:
-            break
-
-results = []
-for result in new_results:
-    best_IC, rotors, init_settings = result
-    init_settings = list(init_settings)
-    ringstellung = [0, 0, 0]
-    highest_IC = 0
-    for r in range(2, 3):
-        for n in range(26):
-            settings = [*init_settings]
-            ringstellung[r] = n
-            settings[r] = (settings[r] + n) % 26
-            plain = [encipher_char(ch) for ch in text]
-            frequencies = frequency_analysis(plain)
-            IC = calculate_IC(frequencies, N)
-            if IC > highest_IC:
-                highest_IC = IC
-                highest_n = n
-        init_settings[r] = (init_settings[r] + highest_n) % 26
-        ringstellung[r] = highest_n
-    individual_result = (rotors, best_IC, init_settings, ringstellung, highest_IC, highest_IC - best_IC)
-    print(individual_result)
-    results.append(individual_result)
-
-results = sorted(results, reverse=True, key=lambda x: x[1])
-print()
-for result in results:
-    print(result)
-
-# best_IC, rotors, init_settings = new_results[0]
-# ringstellung = [0, 0, 0]
-# init_settings = list(init_settings)
-# best_n = 0
-
-# for r in (2, 1):
-#     for n in range(26):
-#         settings = [*init_settings]
-#         ringstellung[r] = n
-#         settings[r] = (settings[r] + n) % 26
-#         plain = [encipher_char(ch) for ch in text]
-#         frequencies = frequency_analysis(plain)
-#         IC = calculate_IC(frequencies, N)
-#         if IC > best_IC:
-#             best_IC = IC
-#             best_n = n
-#     init_settings[r] = (init_settings[r] + best_n) % 26
-#     ringstellung[r] = best_n
-
-# settings = init_settings
-# plain = [arr[ch] for ch in plain]
-# frequencies = frequency_analysis(plain)
-# IC = calculate_IC(frequencies, N)
-
-# print(IC, init_settings, ringstellung)
-# plain = ''.join(plain)
-# print(plain)
+save_results(results_file, results)
 
 """
 

@@ -5,6 +5,7 @@ code_to_test = """
 # decryption process to find correct plain text
 
 import csv
+import itertools
 import re
 from collections import defaultdict, Counter
 
@@ -34,8 +35,7 @@ with open(results_file) as f:
 
 for result in results[:30]:
     print(result)
-
-import itertools
+print(len(results))
 
 with open(cipher_file) as f:
     text = f.read()
@@ -49,26 +49,23 @@ letters = {'A':0,'B':1,'C':2,'D':3,'E':4,'F':5,'G':6,'H':7,
 arr = ('A','B','C','D','E','F','G','H','I','J','K','L','M','N','O',
        'P','Q','R','S','T','U','V','W','X','Y','Z')
 
+# Sets rotors (and their inverse for the way back) according to
+# historical data. rotorkey[0] and invrotor[0] contain the values
+# for Rotor I for example.
 rotorkey = ["EKMFLGDQVZNTOWYHXUSPAIBRCJ",
             "AJDKSIRUXBLHWTMCQGZNPYFVOE",
             "BDFHJLCPRTXVZNYEIWGAKMUSQO",
             "ESOVPZJAYQUIRHXLNFTGKDCMWB",
-            "VZBRGITYUPSDNHLXAWMJQOFECK",
-            "JPGVOUMFYQBENHZRDKASXLICTW",
-            "NZJHGRCXMYSWBOUFAIVLPEKQDT",
-            "FKQHTLXOCBJSPDZRAMEWNIUYGV"]
+            "VZBRGITYUPSDNHLXAWMJQOFECK"]
 invrotor = ["UWYGADFPVZBECKMTHXSLRINQOJ",
             "AJPCZWRLFBDKOTYUQGENHXMIVS",
             "TAGBPCSDQEUFVNZHYIXJWLRKOM",
             "HZWVARTNLGUPXQCEJMBSKDYOIF",
-            "QCYLXWENFTZOSMVJUDKGIARPHB",
-            "SKXQLHCNWARVGMEBJPTYFDZUIO",
-            "QMGYVPEDRCWTIANUXFKZOSLHJB",
-            "QJINSAYDVKBFRUHMCPLEWZTGXO"]
+            "QCYLXWENFTZOSMVJUDKGIARPHB"]
 
-for r in range(len(rotorkey)):
-    rotorkey[r] = [letters[i] for i in rotorkey[r]]
-    invrotor[r] = [letters[i] for i in invrotor[r]]
+# Translates rotorkey and invrotor from letters to numbers.
+rotorkey = [[letters[i] for i in rotor] for rotor in rotorkey]
+invrotor = [[letters[i] for i in rotor] for rotor in invrotor]
 
 reflectorkey = ["EJMZALYXVBWFCRQUONTSPIKHGD",
                 "YRUHQSLDPXNGOKMIEBFZCWVJAT",
@@ -122,16 +119,14 @@ def calculate_IC(frequencies, N):
         f += v * (v - 1)
     return f / N
 
-def frequency_analysis(text):
-    return {char : text.count(char) for char in set(text)}
-
+# Converts cipher text from letters to numbers.
 text = [letters[i] for i in text]
+# Sets value of N for use with calculate_IC as this won't vary.
 N = text_len * (text_len - 1)
 
-results2 = []
+ring_results = []
 for result in results:
     best_IC, rotors, init_settings = result
-    init_settings = list(init_settings)
     ringstellung = [0, 0, 0]
     highest_IC = 0
     for r in (2, 1):
@@ -149,16 +144,17 @@ for result in results:
         ringstellung[r] = highest_n
     individual_result = (rotors, best_IC, init_settings, ringstellung, highest_IC, highest_IC - best_IC)
     # print(individual_result)
-    results2.append(individual_result)
+    ring_results.append(individual_result)
 
-results2 = sorted(results2, reverse=True, key=lambda x: x[4])
+ring_results = sorted(ring_results, reverse=True, key=lambda x: x[4])
 print()
-for result in results2[:30]:
+for result in ring_results[:30]:
     print(result)
+print(len(ring_results))
 
-stecker_result = []
+stecker_results = []
 best_steckers = []
-for result in results2:
+for result in ring_results:
     rotors, _, init_settings, ringstellung, best_IC, _ = result
     highest_IC = best_IC
     for i in range(26):
@@ -172,23 +168,24 @@ for result in results2:
                 best_IC = IC
                 best_steckers = steckers
     result = (rotors, init_settings, ringstellung, highest_IC, best_steckers, best_IC, best_IC-highest_IC)
-    stecker_result.append(result)
+    stecker_results.append(result)
 
-stecker_result = sorted(stecker_result, reverse=True, key=lambda x: x[5])
+stecker_results = sorted(stecker_results, reverse=True, key=lambda x: x[5])
 
 print()
-for result in stecker_result[:30]:
+for result in stecker_results[:30]:
     print(result)
+print(len(stecker_results))
 
-rotors, init_settings, ringstellung, _, steckers, _, _ = stecker_result[0]
+rotors, init_settings, ringstellung, _, steckers, _, _ = stecker_results[0]
 settings = [*init_settings]
 plain = [encipher_char(ch) for ch in text]
 plain = [arr[ch] for ch in plain]
+plain = ''.join(plain)
 frequencies = Counter(plain)
 IC = calculate_IC(frequencies, N)
 
 print(IC, rotors, init_settings, ringstellung, steckers)
-plain = ''.join(plain)
 print(plain)
 """
 

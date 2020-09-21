@@ -9,10 +9,9 @@ import itertools
 import re
 from collections import defaultdict, Counter
 
-# Sets name of cipher text and results file (from crack_enigma2.py) to
-# be loaded.
-cipher_file = 'texts/Code_texts/enigma_cipherJG.txt'
-results_file = 'results/results_enigma_cipherJG.csv'
+# Sets name of cipher text and results file to load.
+cipher_file = 'texts/Code_texts/enigma_medium2.txt'
+results_file = 'results/results_enigma_medium2.csv'
 
 # Processes each row from csv file, sends it to assign_type and counts
 # number of rows from each rotor setting in count_rotors default
@@ -36,6 +35,9 @@ with open(results_file) as f:
     data = csv.reader(f)
     count_rotors = defaultdict(int)
     results = [append_row(row) for row in data if count_rotors[row[1]] < 40]
+
+# For testing. Sets results to settings for correct solution to medium2.
+# results = [(0.04325625364253423, (1, 2, 3), [11, 21, 9], [0, 0, 0])]
 
 for result in results[:30]:
     print(result)
@@ -141,6 +143,7 @@ for r in (2, 1):
     for result in results:
         highest_IC, rotors, init_settings, ringstellung = result
         best_IC = highest_IC
+        best_n = 0
         for n in range(26):
             settings = [*init_settings]
             ringstellung[r] = n
@@ -165,10 +168,11 @@ for r in (2, 1):
 print(len(results))
 
 stecker_results = []
-best_steckers = []
+
 for result in results:
     rotors, _, init_settings, ringstellung, highest_IC, _ = result
     best_IC = highest_IC
+    best_steckers = []
     for i in range(26):
         if i != 4:
             steckers = [(4, i)]

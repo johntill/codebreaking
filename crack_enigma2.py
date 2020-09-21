@@ -1,12 +1,19 @@
 import timeit
 
 code_to_test = """
+# Program to perform first half of decryption of Enigma cipher text.
+# This half iterates through all 26 x 26 x 26 x 60 rotor combinations
+# and saves the results to a csv file in descending IC (index of Coincidence) order.
+
 import re
 import itertools
 
-cipher_file = 'texts/Code_texts/enigma_medium.txt'
-results_file = 'results/results_enigma_medium.csv'
+# Name of file containing cipher.
+cipher_file = 'texts/Code_texts/enigma_medium2.txt'
+# Name of file that will contain results.
+results_file = 'results/results_enigma_medium2.csv'
 
+# Loads cipher text, removes any punctuation and converts to uppercase
 with open(cipher_file) as f:
     text = f.read()
 text = re.sub('[^A-Z]','', text.upper())
@@ -16,8 +23,7 @@ letters = {'A':0,'B':1,'C':2,'D':3,'E':4,'F':5,'G':6,'H':7,
    'I':8,'J':9,'K':10,'L':11,'M':12,'N':13,'O':14,'P':15,'Q':16,
    'R':17,'S':18,'T':19,'U':20,'V':21,'W':22,'X':23,'Y':24,'Z':25}
 
-arr = ('A','B','C','D','E','F','G','H','I','J','K','L','M','N','O',
-       'P','Q','R','S','T','U','V','W','X','Y','Z')
+
 
 rotorkey = ["EKMFLGDQVZNTOWYHXUSPAIBRCJ",
             "AJDKSIRUXBLHWTMCQGZNPYFVOE",
@@ -99,8 +105,10 @@ for rotors in poss_rotors:
         IC = calculate_IC(frequencies, N)
         results.append((IC, rotors, initsettings))
 
+# Sorts results in IC order, largest to smallest
 results = sorted(results, reverse=True)
 
+# Saves results to results file
 def save_results(results_file, results):
     from csv import writer
     with open(results_file, 'w', newline='') as f:

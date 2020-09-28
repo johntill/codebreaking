@@ -11,9 +11,9 @@ import itertools
 from collections import Counter
 
 # Name of file containing cipher.
-cipher_file = 'texts/Code_texts/enigma_medium2.txt'
+cipher_file = 'texts/Code_texts/enigma_FHPQX.txt'
 # Name of file that will contain results.
-results_file = 'results/results_enigma_medium22.csv'
+results_file = 'results/results_enigma_FHPQX.csv'
 
 # Loads cipher text, removes any punctuation and converts to uppercase.
 with open(cipher_file) as f:
@@ -91,9 +91,10 @@ def encipher_char(ch):
     return ch
 
 def calculate_IC(frequencies, N):
-    f = 0
-    for v in frequencies.values():
-        f += v * (v - 1)
+    frequency_values = frequencies.values()
+    f = sum(
+        [v * (v - 1) for v in frequency_values]
+    )
     return f / N
 
 # Converts cipher text from letters to numbers.

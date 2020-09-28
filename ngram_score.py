@@ -10,8 +10,8 @@ class NgramScore(object):
         self.count_total = sum(self.ngrams.values())
         self.floor = log10(0.01 / self.count_total)
         self.ngram_len = len(ngram)
-        for ngram in self.ngrams.keys():
-            self.ngrams[ngram] = log10(self.ngrams[ngram] / self.count_total)
+        for ngram, score in self.ngrams.items():
+            self.ngrams[ngram] = log10(score / self.count_total)
 
     def score(self, text):
         score = 0

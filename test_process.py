@@ -1,28 +1,23 @@
 import timeit
 
 code_to_test = """
-import csv
 import re
-from collections import defaultdict
+from math import log10
 
-filename = 'enigma_results.csv'
+ngram_file = 'texts/Frequencies/english_quintgrams.txt'
 
-def assign_type(row):
-    IC = float(row[0])
-    rotors = tuple([int(s) for s in re.findall(r'\d+', row[1])])
-    settings = [int(s) for s in re.findall(r'\d+', row[2])]
-    return IC, rotors, settings
+ngrams = {}
+with open(ngram_file, 'r', encoding='utf8', errors='ignore') as f:
+        for line in f:
+            ngram, _, count = line.partition(' ')
+            ngrams[ngram] = float(count)
+count_total = sum(ngrams.values())
+floor = log10(0.01 / count_total)
+ngram_len = len(ngram)
+for ngram, count in ngrams.items():
+    ngrams[ngram] = log10(count / count_total)
 
-def append_row(row):
-    count_rotors[row[1]] += 1
-    return assign_type(row)
-
-with open(filename) as f:
-    data = csv.reader(f)
-    count_rotors = defaultdict(int)
-    results = [append_row(row) for row in data if count_rotors[row[1]] < 20]
-
-
+#print(ngrams)
 """
 
 elapsed_time = timeit.timeit(code_to_test, number = 1)#/1000

@@ -25,10 +25,7 @@ class ColumnarTransposition:
         position = 0
         for char in self.ord_key:
             i = self.key.index(char)
-            if i < remainder:
-                new_column = column_len + 1
-            else:
-                new_column = column_len
+            new_column = column_len + 1 if i < remainder else column_len
             plain[i::self.key_len] = text[position:position + new_column]
             position += new_column
         return ''.join(plain)

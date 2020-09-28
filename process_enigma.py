@@ -4,18 +4,16 @@
 # Loads results of crack_enigma2.py from csv file then performs second
 # half of decryption process to find correct plain text.
 
-import csv
-import itertools
 import re
 from collections import defaultdict, Counter
+from csv import reader
 
 # Sets name of cipher text and results file to load.
 cipher_file = 'texts/Code_texts/enigma_FHPQX.txt'
 results_file = 'results/results_enigma_FHPQX.csv'
 
 # Processes each row from csv file, sends it to assign_type and counts
-# number of rows from each rotor setting in count_rotors default
-# dictionary.
+# number of rows for each rotor setting in count_rotors dictionary.
 def append_row(row):
     count_rotors[row[1]] += 1
     return assign_type(row)
@@ -25,15 +23,14 @@ def append_row(row):
 # new variable ringstellung with value [0, 0, 0].
 def assign_type(row):
     IC = float(row[0])
-    rotors = tuple([int(s) for s in re.findall(r'\d+', row[1])])
+    rotors = tuple(int(s) for s in re.findall(r'\d+', row[1]))
     settings = [int(s) for s in re.findall(r'\d+', row[2])]
     return rotors, IC, settings, [0, 0, 0]
 
 # Loads results csv file and creates list containing top 20 results for
 # each rotor setting.
-
 with open(results_file) as f:
-    data = csv.reader(f)
+    data = reader(f)
     count_rotors = defaultdict(int)
     # results = [append_row(row) for row in data if count_rotors[row[1]] < 400]
     # results = [append_row(row) for row in data]
@@ -92,9 +89,9 @@ reflectorkey = ["EJMZALYXVBWFCRQUONTSPIKHGD",
                 "FVPJIAOYEDRZXWGCTKUQSBNMHL"]
 
 reflector = 'B'
-reflector = tuple([letters[i] for i in reflectorkey[letters[reflector]]])
+reflector = tuple(letters[i] for i in reflectorkey[letters[reflector]])
 
-notch = ((16,), (4,), (21,), (9,), (25,), (25,12), (25,12), (25,12))
+notch = ((16,), (4,), (21,), (9,), (25,))
 
 steckers = []
 
@@ -107,11 +104,9 @@ def advance_rotor():
     settings[2] = (settings[2] + 1) % 26
 
 def apply_steckers(ch):
-    for i in steckers:
-        if ch == i[0]:
-            return i[1]
-        if ch == i[1]:
-            return i[0]
+    for plug1, plug2 in steckers:
+        if ch == plug1: return plug2
+        if ch == plug2: return plug1
     return ch
 
 def apply_rotor(ch, key, offset):
@@ -134,10 +129,11 @@ def encipher_char(ch):
     return ch
 
 def calculate_IC(frequencies, N):
-    f = 0
+    # sourcery skip: comprehension-to-generator
     frequency_values = frequencies.values()
-    for v in frequency_values:
-        f += v * (v - 1)
+    f = sum(
+        [v * (v - 1) for v in frequency_values]
+    )
     return f / N
 
 # Converts cipher text from letters to numbers.
@@ -166,12 +162,10 @@ for r in (2, 1):
             plain = [encipher_char(ch) for ch in text]
             frequencies = Counter(plain)
             IC = calculate_IC(frequencies, N)
-            if init_settings == [18,10,7]:
-                if r == 2 and n == 14:
-                    print(f'Correct = {count}, {result}')
-            if init_settings == [18,10,21]:
-                if r == 1 and n == 19:
-                    print(f'Correct = {count}, {result}')
+            if init_settings == [18, 10, 7] and r == 2 and n == 14:
+                print(f'Correct = {count}, {result}')
+            if init_settings == [18, 10, 21] and r == 1 and n == 19:
+                print(f'Correct = {count}, {result}')
             if IC > best_IC:
                 best_IC, best_n = IC, n
         init_settings[r] = (init_settings[r] + best_n) % 26
@@ -195,7 +189,7 @@ for r in (2, 1):
                     test_case[2] = temp
 
 
-            
+
     count_rotors = defaultdict(int)
     # results = ([filter_result(result, r) for result in ring_results
     #             if count_rotors[result[0]] < r*100])

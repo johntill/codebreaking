@@ -32,6 +32,7 @@ def frequency_analysis(text, alphabet=None):
 
 # Calculates the IC (Index of Coincidence) of a text.
 def calculate_IC(frequencies, text_len):
+    # sourcery skip: comprehension-to-generator
     frequency_values = frequencies.values()
     sum_freqs = sum(
         [letter_freq * (letter_freq - 1) for letter_freq in frequency_values]

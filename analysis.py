@@ -10,8 +10,8 @@ from collections import defaultdict, Counter
 cipher_file = 'texts/Code_texts/vigtest1.txt'
 ev_file = 'texts/Frequencies/english_monograms.txt'
 
-# bi, tri and quad_gram frequencies use different methods
-# to create the frequencies dictionary and count
+# bi, tri and quad_gram frequencies use different methods to create the
+# frequencies dictionary.
 # defaultdict is fastest, followed by Counter and then get
 def bi_gram_freq(text, text_len):
     n_gram = {}
@@ -42,8 +42,9 @@ def print_freq_inc_nulls(frequencies, alphabet):
         else:
             print(char, 0)
 
-# function that tries all 26 different possibilities of the Caesar cipher
-# then uses the Chi squared score of each to display the correct translation
+# Function that tries all 26 different possibilities of the Caesar
+# cipher then uses the Chi squared score of each to display the correct
+# translation.
 def score_caesar(text, ngrams_ev, shift):
     plaintext = caesar.Caesar(shift).decipher(text)
     freq = ct.frequency_analysis(plaintext)
@@ -51,9 +52,9 @@ def score_caesar(text, ngrams_ev, shift):
     print(f'{shift:02} : {plaintext[:15]} : {chi_two:.4f}')
     return (chi_two, shift)
 
-# Calculates average IC for all keylengths 2-31
-# will reveal keylength for repeating polyalphabetical ciphers
-# e.g. Vigenere
+# Calculates average IC for all keylengths in the range 2-31 to 
+# determine the correct one. This works for repeating polyalphabetical
+# ciphers such as the Vigenere cipher.
 def periodic_IC(text):
     key_scores = []
     frequency_analysis = ct.frequency_analysis

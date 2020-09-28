@@ -2,38 +2,42 @@ import timeit
 
 code_to_test = """
 import re
+
+import cipher_tools as ct
 import code_vigenere as vigenere
-import cipher_tools as tools
-import ngram_score as ns
 
 cipher_file = 'texts/Code_texts/vigtest2.txt'
 ngram_file = 'texts/Frequencies/english_quadgrams.txt'
 
-fitness = ns.NgramScore(ngram_file)
+text = ct.import_cipher(cipher_file)
+text_len = len(text)
 
-text = tools.import_cipher(cipher_file)
+ngram_create_scoring_attributes = ct.ngram_create_scoring_attributes
+ngram_score_text = ct.ngram_score_text
+ngram_attributes = ngram_create_scoring_attributes(ngram_file, text_len)
 
-# Next step cycles though all keyword lengths of 2-30
-# and calculates Index of Coincidence
-# increase range if you think key word is > 15 characters
-# the greater the range the more cipher text is needed
+frequency_analysis = ct.frequency_analysis
+calculate_IC = ct.calculate_IC
+
+alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+# Cycles though all keyword lengths of 2-30 and calculates Index of Coincidence.
+# Increase range if you think key word is > 15 characters, the greater the
+# range the more cipher text is needed.
 for n in range(2, 31):
     IC = 0
     for i in range(n):
         section = text[i::n]
-        freqs = tools.frequency_analysis(section)
-        IC += tools.calculate_IC(freqs, len(section))
-    # if average IC for keylength scores highly enough
-    # then end loop early and move to next step
-    # value can be tuned if it's not giving correct key length
-    # zero issues so far
+        freqs = frequency_analysis(section, alphabet)
+        IC += calculate_IC(freqs, len(section))
+    # If average IC for keylength scores highly enough then end loop
+    # early and move to next step. Value can be tuned if it's not giving
+    # correct key length.
     if (IC / n) > 0.06:
         key_len = n
         break
 
 keyword = ['A'] * key_len
-alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-text_len = len(text)
 best_score = -1000000
 
 # runs IC scoring cycle to obtain initial key
@@ -43,8 +47,8 @@ for i in range(key_len):
     for letter in alphabet:
         keyword[i] = letter
         plain_text = vigenere.Vigenere(keyword).decipher(text)
-        frequencies = tools.frequency_analysis(plain_text, alphabet)
-        IC = tools.calculate_IC(frequencies, text_len)
+        frequencies = frequency_analysis(plain_text, alphabet)
+        IC = calculate_IC(frequencies, text_len)
         if IC >= best_IC:
             best_IC, best_letter = IC, letter
     keyword[i] = best_letter
@@ -56,7 +60,7 @@ for _ in range(2):
         for letter in alphabet:
             keyword[i] = letter
             plain_text = vigenere.Vigenere(keyword).decipher(text)
-            score = fitness.score(plain_text)
+            score = ngram_score_text(plain_text, ngram_attributes)
             if score >= best_score:
                 best_score, best_letter = score, letter
         keyword[i] = best_letter

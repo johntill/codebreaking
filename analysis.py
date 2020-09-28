@@ -1,4 +1,4 @@
-import cipher_tools as tools
+import cipher_tools as ct
 import code_caesar as caesar
 from collections import defaultdict, Counter
 
@@ -7,7 +7,7 @@ from collections import defaultdict, Counter
 # Also offers to decrypt a Caesar cipher or test whether the cipher text
 # has a periodic IC which is the fingerprint of certain ciphers.
 
-cipher_file = 'texts/Code_texts/adfgvxshort24.txt'
+cipher_file = 'texts/Code_texts/vigtest1.txt'
 ev_file = 'texts/Frequencies/english_monograms.txt'
 
 # bi, tri and quad_gram frequencies use different methods
@@ -46,8 +46,8 @@ def print_freq_inc_nulls(frequencies, alphabet):
 # then uses the Chi squared score of each to display the correct translation
 def score_caesar(text, ngrams_ev, shift):
     plaintext = caesar.Caesar(shift).decipher(text)
-    freq = tools.frequency_analysis(plaintext)
-    chi_two = tools.chi_squared(freq, ngrams_ev)    
+    freq = ct.frequency_analysis(plaintext)
+    chi_two = ct.chi_squared(freq, ngrams_ev)    
     print(f'{shift:02} : {plaintext[:15]} : {chi_two:.4f}')
     return (chi_two, shift)
 
@@ -56,14 +56,16 @@ def score_caesar(text, ngrams_ev, shift):
 # e.g. Vigenere
 def periodic_IC(text):
     key_scores = []
+    frequency_analysis = ct.frequency_analysis
+    calculate_IC = ct. calculate_IC
     for key_len in range(2, 31):
         IC = 0
         spike = ""
         for i in range(key_len):
             section = text[i::key_len]
-            freqs = tools.frequency_analysis(section)
+            freqs = frequency_analysis(section)
             section_len = len(section)
-            IC += tools.calculate_IC(freqs, section_len)
+            IC += calculate_IC(freqs, section_len)
         average_IC = IC / key_len
         if average_IC >= 0.06:
             key_scores.append(key_len)
@@ -72,33 +74,34 @@ def periodic_IC(text):
     return key_scores
 
 def main():
-    text = tools.import_cipher(cipher_file)
+    text = ct.import_cipher(cipher_file)
     text_len = len(text)
-    ngrams_ev = tools.expected_values(ev_file, text_len)
+    ngrams_ev = ct.expected_values(ev_file, text_len)
     alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     
     print(f"\nText length: {text_len}")
 
-    frequencies = tools.frequency_analysis(text)
+    frequencies = ct.frequency_analysis(text)
     freq_len = len(frequencies)
     print(f"Number of unique letters: {freq_len}")
 
-    chi_two = tools.chi_squared(frequencies, ngrams_ev)
+    chi_two = ct.chi_squared(frequencies, ngrams_ev)
     print(f"Chi squared score: {chi_two}\n")
 
-    IC = tools.calculate_IC(frequencies, text_len)
+    calculate_IC = ct. calculate_IC
+    IC = calculate_IC(frequencies, text_len)
     print(f"IC value: {IC}")
 
     bi_gram = bi_gram_freq(text, text_len)
-    bigram_IC = tools.calculate_IC(bi_gram, text_len)
+    bigram_IC = calculate_IC(bi_gram, text_len)
     print(f"Bigram IC value: {bigram_IC}")
 
     tri_gram = tri_gram_freq(text, text_len)
-    trigram_IC = tools.calculate_IC(tri_gram, text_len)
+    trigram_IC = calculate_IC(tri_gram, text_len)
     print(f"Trigram IC value: {trigram_IC}")
 
     quad_gram = quad_gram_freq(text, text_len)
-    quadgram_IC = tools.calculate_IC(quad_gram, text_len)
+    quadgram_IC = calculate_IC(quad_gram, text_len)
     print(f"Quadgram IC value: {quadgram_IC}")
 
     if freq_len == 2:
@@ -127,14 +130,12 @@ def main():
 
     ask = input("\nDo you want to show bigram frequencies? (y/n): ")
     if ask == 'y':
-        print_freq(bi_gram)
+        print(bi_gram)
         print(f"Number of bigrams = {len(bi_gram)}")
 
     ask = input("\nDo you want to show trigram & quadgram frequencies? (y/n): ")
     if ask == 'y':
-        print_freq(tri_gram)
         print(f"Number of trigrams = {len(tri_gram)}")
-        print_freq(quad_gram)
         print(f"Number of quadgrams = {len(quad_gram)}")
 
     # Offers to decrypt Caesar shift cipher if IC above 0.06

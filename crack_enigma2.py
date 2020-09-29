@@ -60,7 +60,7 @@ reflector = tuple([letters[i] for i in reflectorkey[letters[reflector]]])
 # Sets numerical values for the notches in the rotors. The notches
 # caused the rotors to spin when encountered. The 8 notches correspond
 # to the 8 rotors above, notch[0] corresponds to rotorkey[0] (or Rotor I).
-notch = ((16,), (4,), (21,), (9,), (25,), (25,12), (25,12), (25,12))
+notch = ((16,), (4,), (21,), (9,), (25,))
 
 # Function to simulate the spinning of the rotors. Advances the right-hand
 # rotor (rotor[2]) every character and the other rotors when a notch

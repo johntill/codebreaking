@@ -41,8 +41,8 @@ def calculate_IC(frequencies, text_len):
 
 # Calculates the Chi Squared score of a text.
 def chi_squared(frequencies, ngrams_ev):
-    chi_two = 0
     frequency_items = frequencies.items()
+    chi_two = 0
     for char, frequency in frequency_items:
         expected_frequency = ngrams_ev[char]
         chi_two += (frequency - expected_frequency) ** 2 / expected_frequency

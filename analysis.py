@@ -21,13 +21,13 @@ def bi_gram_freq(text, text_len):
 
 def tri_gram_freq(text, text_len):
     n_gram = Counter()
-    for c in range(0, text_len-2, 1):
+    for c in range(0, text_len-2, 3):
         n_gram[text[c:c+3]] += 1
     return n_gram
 
 def quad_gram_freq(text, text_len):
     n_gram = defaultdict(int)
-    for c in range(0, text_len-3, 1):
+    for c in range(0, text_len-3, 4):
         n_gram[text[c:c+4]] += 1
     return n_gram
 
@@ -141,7 +141,7 @@ def main():
 
     # Offers to decrypt Caesar shift cipher if IC above 0.06
     # as too simple to warrant own program
-    if IC >= 0.06:
+    if IC >= 0.06 and freq_len > 10:
         ask = input("\nAttempt Caesar Shift decryption? (y/n): ")
         if ask == 'y':
             print()

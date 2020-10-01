@@ -1,31 +1,39 @@
+import timeit
+
+code_to_test = """
+
 import cipher_tools as ct
-import code_caesar as caesar
 
 cipher_file = 'texts/Code_texts/Caesartest1.txt'
 ev_file = 'texts/Frequencies/english_monograms.txt'
 
-# Function that tries all 26 different possibilities of the Caesar
-# cipher then uses the Chi squared score of each to display the correct
-# translation.
-def score_caesar(text, ngrams_ev, shift):
-    plaintext = caesar.Caesar(shift).decipher(text)
-    freq = ct.frequency_analysis(plaintext)
-    chi_two = ct.chi_squared(freq, ngrams_ev)    
-    print(f'{shift:02} : {plaintext[:15]} : {chi_two:.4f}')
+def decipher(text, alphabet, shift):
+    shifted_alphabet = alphabet[shift:] + alphabet[:shift]
+    table = str.maketrans(shifted_alphabet, alphabet)
+    return text.translate(table)
+
+def score_caesar(text, ngrams_ev, alphabet, shift):
+    plaintext = decipher(text, alphabet, shift)
+    freq = ct.frequency_analysis(plaintext, alphabet)
+    chi_two = ct.chi_squared(freq, ngrams_ev)
     return chi_two, shift
 
-def main():
-    text = ct.import_cipher(cipher_file)
-    text_len = len(text)
 
-    ngrams_ev = ct.expected_values(ev_file, text_len)
-    alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+text = ct.import_cipher(cipher_file)
+text_len = len(text)
 
-    scores = [score_caesar(text, ngrams_ev, shift) for shift in range(26)]
-    best_shift = sorted(scores)[0][1]
-    plain_text = caesar.Caesar(best_shift).decipher(text)
-    print(f"\nOriginal shift = {alphabet[best_shift]} ({best_shift})\n")
-    print(plain_text.lower())
+ngrams_ev = ct.expected_values(ev_file, text_len)
+alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
-if __name__ == "__main__":
-    main()
+scores = [score_caesar(text, ngrams_ev, alphabet, shift) for shift in range(26)]
+best_shift = sorted(scores)[0][1]
+plain_text = decipher(text, alphabet, best_shift)
+print(alphabet[best_shift], best_shift)
+print(plain_text.lower())
+
+
+
+"""
+
+elapsed_time = timeit.timeit(code_to_test, number = 1)#/1000
+print(elapsed_time)

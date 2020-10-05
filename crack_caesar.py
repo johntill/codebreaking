@@ -18,7 +18,6 @@ def score_caesar(text, ngrams_ev, alphabet, shift):
     chi_two = ct.chi_squared(freq, ngrams_ev)
     return chi_two, shift
 
-
 text = ct.import_cipher(cipher_file)
 text_len = len(text)
 
@@ -30,8 +29,6 @@ best_shift = sorted(scores)[0][1]
 plain_text = decipher(text, alphabet, best_shift)
 print(alphabet[best_shift], best_shift)
 print(plain_text.lower())
-
-
 
 """
 

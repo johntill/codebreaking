@@ -171,7 +171,7 @@ for r in (2, 1):
         individual_result = (count, rotors, highest_IC, init_settings, ringstellung,
                              best_IC, best_IC - highest_IC)
         ring_results.append(individual_result)
-    ring_results = sorted(ring_results, reverse=True, key=lambda x: x[4])
+    ring_results = sorted(ring_results, reverse=True, key=lambda x: x[5])
     for result in ring_results[:30]:
         print(result)
 
@@ -201,7 +201,7 @@ for result in results:
               best_IC, best_IC-highest_IC)
     stecker_results.append(result)
 
-stecker_results = sorted(stecker_results, reverse=True, key=lambda x: x[5])
+stecker_results = sorted(stecker_results, reverse=True, key=lambda x: x[6])
 
 print()
 for result in stecker_results[:30]:

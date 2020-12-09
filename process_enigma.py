@@ -4,13 +4,20 @@
 # Loads results of crack_enigma2.py from csv file then performs second
 # half of decryption process to find correct plain text.
 
+import string
 import re
 from collections import defaultdict, Counter
 from csv import reader
 
 # Sets name of cipher text and results file to load.
-cipher_file = 'texts/Code_texts/enigma_FHPQX.txt'
-results_file = 'results/results_enigma_FHPQX.csv'
+cipher_file = 'texts/Code_texts/enigma_cipherJG.txt'
+results_file = 'results/results_enigma_cipherJG.csv'
+
+# Loads cipher text
+with open(cipher_file) as f:
+    text = f.read()
+text = re.sub('[^A-Z]','', text.upper())
+text_len = len(text)
 
 # Processes each row from csv file, sends it to assign_type and counts
 # number of rows for each rotor setting in count_rotors dictionary.
@@ -32,38 +39,18 @@ def assign_type(row):
 with open(results_file) as f:
     data = reader(f)
     count_rotors = defaultdict(int)
-    # results = [append_row(row) for row in data if count_rotors[row[1]] < 400]
+    results = [append_row(row) for row in data if count_rotors[row[1]] < 400]
     # results = [append_row(row) for row in data]
-
-# For testing. Sets results to settings for correct solution to:
-# medium2, FHPQX, cipherJG.
-results = [((1, 2, 3), 0.04325625364253423, [11, 21, 9], [0, 0, 0]),
-           ((3, 1, 2), 0.03694440788030363, [18, 10, 7], [0, 0, 0]),
-           ((1, 0, 2), 0.04154852489147321, [1, 10, 5], [0, 0, 0])]
-
-test_case = [(3, 1, 2), 0.04137598174718091, [18, 10, 7], [0, 0, 0]]
 
 for result in results[:30]:
     print(result)
 
-count = 0
-for result in results:
-    if result[0] == test_case[0]:
-        count += 1
-        if result[2] == test_case[2]:
-            print(count, result)
-
-with open(cipher_file) as f:
-    text = f.read()
-text = re.sub('[^A-Z]','', text.upper())
-text_len = len(text)
-
-letters = {'A':0,'B':1,'C':2,'D':3,'E':4,'F':5,'G':6,'H':7,'I':8,'J':9,
-           'K':10,'L':11,'M':12,'N':13,'O':14,'P':15,'Q':16,'R':17,
-           'S':18,'T':19,'U':20,'V':21,'W':22,'X':23,'Y':24,'Z':25}
-
-arr = ('A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P',
-       'Q','R','S','T','U','V','W','X','Y','Z')
+# Creates tuple containing all letters of the alphabet. Used to create
+# letters dictionary and to convert numbers to corresponding letters.
+arr = tuple(string.ascii_uppercase)
+# Creates dictionary for each letter and their index e.g. 'A':0, 'B': 1 etc.
+# Used to convert letters to numbers for easier processing.
+letters = {ch: index for index, ch in enumerate(arr)}
 
 # Sets rotors (and their inverse for the way back) according to
 # historical data. rotorkey[0] and invrotor[0] contain the values for
@@ -162,10 +149,6 @@ for r in (2, 1):
             plain = [encipher_char(ch) for ch in text]
             frequencies = Counter(plain)
             IC = calculate_IC(frequencies, N)
-            if init_settings == [18, 10, 7] and r == 2 and n == 14:
-                print(f'Correct = {count}, {result}')
-            if init_settings == [18, 10, 21] and r == 1 and n == 19:
-                print(f'Correct = {count}, {result}')
             if IC > best_IC:
                 best_IC, best_n = IC, n
         init_settings[r] = (init_settings[r] + best_n) % 26
@@ -176,24 +159,11 @@ for r in (2, 1):
     ring_results = sorted(ring_results, reverse=True, key=lambda x: x[4])
     for result in ring_results[:30]:
         print(result)
-    count = 0
-    for result in ring_results:
-        if result[0] == test_case[0]:
-            count += 1
-            if result[2][:r] == test_case[2][:r]:
-                temp_r = (test_case[2][r] + result[3][r]) % 26
-                temp = test_case[2]
-                temp[r] = temp_r
-                if temp == result[2]:
-                    print(f'Highest = {count}, {result}')
-                    test_case[2] = temp
-
-
 
     count_rotors = defaultdict(int)
-    # results = ([filter_result(result, r) for result in ring_results
-    #             if count_rotors[result[0]] < r*100])
-    results = [filter_result(result, r) for result in ring_results]
+    results = ([filter_result(result, r) for result in ring_results
+                if count_rotors[result[0]] < r*100])
+
 
 print(len(results))
 
@@ -222,15 +192,6 @@ print()
 for result in stecker_results[:30]:
     print(result)
 print(len(stecker_results))
-
-count = 0
-for result in stecker_results:
-    if result[0] == test_case[0]:
-        count += 1
-        if result[1] == test_case[2]:
-            print(count, result)
-    if result[1] == [18,3,21]:
-        print(f'Correct = {count}, {result}')
 
 rotors, init_settings, ringstellung, _, steckers, _, _ = stecker_results[0]
 settings = [*init_settings]

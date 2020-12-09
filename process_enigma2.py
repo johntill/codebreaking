@@ -16,8 +16,7 @@ results_file = 'results/results_enigma_FHPQX.csv'
 # number of rows for each rotor setting in count_rotors dictionary.
 def append_row(row):
     count_rotors[row[1]] += 1
-    count = count_rotors[row[1]]
-    return assign_type(row, count)
+    return assign_type(row, count_rotors[row[1]])
 
 # Breaks up the string from the csv file into IC score(float),
 # rotors(Tuple) & settings(list) so they are in a usable form. Also adds
@@ -34,17 +33,19 @@ with open(results_file) as f:
     data = reader(f)
     count_rotors = defaultdict(int)
     #results = [append_row(row) for row in data if count_rotors[row[1]] < 400]
-    results = [append_row(row) for row in data if row[1] == '(3, 1, 2)']
+    #results = [append_row(row) for row in data if row[1] == '(3, 1, 2)']
     #results = [append_row(row) for row in data]
 
 
 # For testing. Sets results to settings for correct solution to:
 # medium2, FHPQX, cipherJG.
-# results = [((1, 2, 3), 0.04325625364253423, [11, 21, 9], [0, 0, 0]),
-#            ((3, 1, 2), 0.03694440788030363, [12, 10, 7], [0, 0, 0]),
-#            ((1, 0, 2), 0.04154852489147321, [1, 10, 5], [0, 0, 0])]
+# results = [(5, (1, 2, 3), 0.04325625364253423, [11, 21, 9], [0, 0, 0]),
+#            (4783, (3, 1, 2), 0.039138256329252774, [12, 10, 7], [0, 0, 0]),
+#            (1, (1, 0, 2), 0.04156358712036022, [1, 10, 5], [0, 0, 0])]
 
-# test_case = [(3, 1, 2), 0.04137598174718091, [12, 10, 7], [0, 0, 0]]
+#results = [(5, (1, 2, 3), 0.04325625364253423, [11, 21, 9], [0, 0, 0])]
+results = [(4783, (3, 1, 2), 0.039138256329252774, [12, 10, 7], [0, 0, 0])]
+#results = [(1, (1, 0, 2), 0.04156358712036022, [1, 10, 5], [0, 0, 0])]
 
 for result in results[:30]:
     print(result)
@@ -52,20 +53,21 @@ for result in results[:30]:
 for result in results:
     if result[3] == [12, 10, 7]:
         target = result[0]
-        print(result)
-
 
 with open(cipher_file) as f:
     text = f.read()
 text = re.sub('[^A-Z]','', text.upper())
 text_len = len(text)
 
-letters = {'A':0,'B':1,'C':2,'D':3,'E':4,'F':5,'G':6,'H':7,'I':8,'J':9,
-           'K':10,'L':11,'M':12,'N':13,'O':14,'P':15,'Q':16,'R':17,
-           'S':18,'T':19,'U':20,'V':21,'W':22,'X':23,'Y':24,'Z':25}
+# letters = {'A':0,'B':1,'C':2,'D':3,'E':4,'F':5,'G':6,'H':7,'I':8,'J':9,
+#            'K':10,'L':11,'M':12,'N':13,'O':14,'P':15,'Q':16,'R':17,
+#            'S':18,'T':19,'U':20,'V':21,'W':22,'X':23,'Y':24,'Z':25}
 
-arr = ('A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P',
-       'Q','R','S','T','U','V','W','X','Y','Z')
+# arr = ('A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P',
+#        'Q','R','S','T','U','V','W','X','Y','Z')
+
+arr = tuple('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+letters = {ch: index for index, ch in enumerate(arr)}
 
 # Sets rotors (and their inverse for the way back) according to
 # historical data. rotorkey[0] and invrotor[0] contain the values for
@@ -133,7 +135,10 @@ def encipher_char(ch):
 def calculate_IC(frequencies, N):
     # sourcery skip: comprehension-to-generator
     frequency_values = frequencies.values()
-    f = sum([v * (v - 1) for v in frequency_values])
+    #f = sum([v * (v - 1) for v in frequency_values])
+    f = 0
+    for v in frequency_values:
+        f += v * (v - 1)
     return f / N
 
 # Converts cipher text from letters to numbers.
@@ -143,9 +148,7 @@ N = text_len * (text_len - 1)
 
 def filter_result(result, r):
     count, rotors, _, init_settings, ringstellung, highest_IC, _ = result
-    count_rotors[rotors] += 1
-    if count == target:
-        print(result)
+    #count_rotors[rotors] += 1
     if r == 2:
         return count, rotors, highest_IC, init_settings, ringstellung
     return result
@@ -153,74 +156,103 @@ def filter_result(result, r):
 for r in (2, 1):
     print(len(results))
     ring_results = []
+    special_results = []
     for result in results:
-        count, rotors, highest_IC, init_settings, ringstellung = result
+        count, rotors, highest_IC, init_settings, ring_settings = result
+        ringstellung = [*ring_settings]
         best_IC = highest_IC
         best_n = 0
+        #print(result)
         for n in range(26):
+            #print(n)
             settings = [*init_settings]
+            #print(settings)
             ringstellung[r] = n
+            #print(ringstellung)
             settings[r] = (settings[r] + n) % 26
+            #print(settings)
+            #print(count, n, settings, ringstellung)
             plain = [encipher_char(ch) for ch in text]
             frequencies = Counter(plain)
             IC = calculate_IC(frequencies, N)
-            if IC > best_IC:
-                best_IC, best_n = IC, n
-        init_settings[r] = (init_settings[r] + best_n) % 26
-        ringstellung[r] = best_n
-        individual_result = (count, rotors, highest_IC, init_settings, ringstellung,
-                             best_IC, best_IC - highest_IC)
-        ring_results.append(individual_result)
+            #print(IC)
+            if count == target:
+                settings = [*init_settings]
+                settings[r] = (settings[r] + n) % 26
+                n_result = (count, rotors, highest_IC, tuple(settings),
+                            tuple(ringstellung), IC, IC-highest_IC)
+                #print(n_result)
+                special_results.append(n_result)
+                ring_results.append(n_result)
+        #     if IC > best_IC:
+        #         best_IC, best_n = IC, n
+        # init_settings[r] = (init_settings[r] + best_n) % 26
+        # ringstellung[r] = best_n
+        # individual_result = (count, rotors, highest_IC, init_settings, ringstellung,
+        #                      best_IC, best_IC-highest_IC)
+        # ring_results.append(individual_result)
     ring_results = sorted(ring_results, reverse=True, key=lambda x: x[5])
-    for result in ring_results[:30]:
+    # for result in special_results:
+    #     print(result)
+    # print()
+    for result in ring_results:
         print(result)
-
-    count_rotors = defaultdict(int)
-    # results = ([filter_result(result, r) for result in ring_results
-    #             if count_rotors[result[0]] < r*100])
+    
+#     count_rotors = defaultdict(int)
+#     # results = ([filter_result(result, r) for result in ring_results
+#     #             if count_rotors[result[0]] < r*100])
     results = [filter_result(result, r) for result in ring_results]
 
 print(len(results))
 
-stecker_results = []
+# stecker_results = []
+# special_results = []
 
-for result in results:
-    count, rotors, _, init_settings, ringstellung, highest_IC, _ = result
-    best_IC = highest_IC
-    best_steckers = []
-    for i in range(26):
-        if i != 4:
-            steckers = [(4, i)]
-            settings = [*init_settings]
-            plain = [encipher_char(ch) for ch in text]
-            frequencies = Counter(plain)
-            IC = calculate_IC(frequencies, N)
-            if IC > best_IC:
-                best_IC, best_steckers = IC, steckers
-    result = (count, rotors, init_settings, ringstellung, highest_IC, best_steckers,
-              best_IC, best_IC-highest_IC)
-    stecker_results.append(result)
+# for result in results:
+#     count, rotors, _, init_settings, ringstellung, highest_IC, _ = result
+#     best_IC = highest_IC
+#     best_steckers = []
+#     for i in range(26):
+#         if i != 4:
+#             steckers = [(4, i)]
+#             settings = [*init_settings]
+#             plain = [encipher_char(ch) for ch in text]
+#             frequencies = Counter(plain)
+#             IC = calculate_IC(frequencies, N)
+#             if count == target:
+#                 n_result = (count, rotors, settings, ringstellung, highest_IC,
+#                             steckers, IC, IC-highest_IC)
+#                 special_results.append(n_result)
+#             if IC > best_IC:
+#                 best_IC, best_steckers = IC, steckers
+#     result = (count, rotors, init_settings, ringstellung, highest_IC, best_steckers,
+#               best_IC, best_IC-highest_IC)
+#     stecker_results.append(result)
 
-stecker_results = sorted(stecker_results, reverse=True, key=lambda x: x[6])
+# stecker_results = sorted(stecker_results, reverse=True, key=lambda x: x[6])
 
-print()
-for result in stecker_results[:30]:
-    print(result)
-print(len(stecker_results))
+# print()
+# for result in special_results:
+#     print(result)
 
-for result in stecker_results:
-    if result[0] == target:
-        print(result)
+# print()
+# for result in stecker_results[:30]:
+#     print(result)
+# print(len(stecker_results))
 
-count, rotors, init_settings, ringstellung, _, steckers, _, _ = stecker_results[0]
-settings = [*init_settings]
-plain = [encipher_char(ch) for ch in text]
-plain = ''.join([arr[ch] for ch in plain])
-frequencies = Counter(plain)
-IC = calculate_IC(frequencies, N)
+# for result in stecker_results:
+#     if result[0] == target:
+#         print(result)
 
-print(count, IC, rotors, init_settings, ringstellung, steckers)
-print(plain)
+# count, rotors, init_settings, ringstellung, _, steckers, _, _ = stecker_results[0]
+# settings = [*init_settings]
+# plain = [encipher_char(ch) for ch in text]
+# plain = ''.join([arr[ch] for ch in plain])
+# frequencies = Counter(plain)
+# IC = calculate_IC(frequencies, N)
+
+# print(count, IC, rotors, init_settings, ringstellung, steckers)
+# print(plain)
 # """
 
 # elapsed_time = timeit.timeit(code_to_test, number = 1)#/1000

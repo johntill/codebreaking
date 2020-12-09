@@ -1,5 +1,3 @@
-import string
-
 class Caesar:
 
     def __init__(self, shift):

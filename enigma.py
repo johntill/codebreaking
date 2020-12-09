@@ -12,14 +12,14 @@ with open(cipher_file) as f:
 text = re.sub('[^A-Z]','', text.upper())
 text_len = len(text)
 
-
-settings = ('S', 'K', 'H')
+settings = ('M', 'D', 'V')
+#settings = ('S', 'D', 'V')
 rotors = (4, 2, 3)
 reflector = 'B'
-#ringstellung = ('G', 'T', 'O')
-ringstellung = ('A', 'A', 'A')
-# steckers = ([(4,25),(17,22),(12,21),(8,20),(1,11),(15,23),(9,14)])
-# steckers = [(4,7), (10,13), (11,17), (19,23), (8,12), (0,3)] # FHPQX
+ringstellung = ('A', 'T', 'O')
+#ringstellung = ('A', 'A', 'A')
+#steckers = ([(4,25),(17,22),(12,21),(8,20),(1,11),(15,23),(9,14)])
+#steckers = [(0,3),(4,7),(6,24),(8,12),(10,13),(11,17),(14,25),(16,21),(19,23),(20,22)] # FHPQX
 steckers = []
 
 letters = {'A':0,'B':1,'C':2,'D':3,'E':4,'F':5,'G':6,'H':7,
@@ -46,11 +46,11 @@ reflectorkey = ["EJMZALYXVBWFCRQUONTSPIKHGD",
 rotorkey = [[letters[i] for i in rotor] for rotor in rotorkey]
 invrotor = [[letters[i] for i in rotor] for rotor in invrotor]
 
-
 notch = ((16,),(4,),(21,),(9,),(25,),(25,12),(25,12),(25,12))
 
 settings = [letters[i] for i in settings]
-rotors = [q-1 for q in rotors]
+print(settings)
+rotors = [i-1 for i in rotors]
 reflector = tuple([letters[i] for i in reflectorkey[letters[reflector]]])
 ringstellung = [letters[i] for i in ringstellung]
 
@@ -63,11 +63,9 @@ def advance_rotor():
     settings[2] = (settings[2] + 1) % 26
 
 def apply_steckers(ch):
-    for i in steckers:
-        if ch == i[0]:
-            return i[1]
-        if ch == i[1]:
-            return i[0]
+    for plug1, plug2 in steckers:
+        if ch == plug1: return plug2
+        if ch == plug2: return plug1
     return ch
 
 def apply_rotor(ch, key, offset):
@@ -79,7 +77,8 @@ def encipher_char(ch):
     #print(ch, settings)
     #print()
     advance_rotor()
-    ch = apply_steckers(ch)
+    if steckers:
+        ch = apply_steckers(ch)
     for i in (2, 1, 0):
         #print("-"*10)
         offset = settings[i] - ringstellung[i]
@@ -94,7 +93,8 @@ def encipher_char(ch):
         offset = settings[i] - ringstellung[i]
         ch = apply_rotor(ch, invrotor[rotors[i]], offset)
         #print(ch, settings)
-    ch = apply_steckers(ch)
+    if steckers:
+        ch = apply_steckers(ch)
     #print()
     return ch
 
@@ -114,7 +114,7 @@ text = [letters[i] for i in text]
 
 N = text_len * (text_len - 1)
 
-for n in range(1):
+for n in range(1000):
     plain = [encipher_char(ch) for ch in text]
 
 

@@ -30,12 +30,12 @@ def calculate_pos_min_max(key_len, full_rows, num_long_col):
     # in the text for each column
     num_short_col = key_len - num_long_col
     adj = [None] * key_len
-    for pos in range(key_len):
-        pos_min = pos * full_rows
-        pos_max = pos_min + min(pos, num_long_col)
-        if pos > num_short_col:
-            pos_min += pos - num_short_col
-        adj[pos] = (pos_min, pos_max)
+    for column_number in range(key_len):
+        pos_min = column_number * full_rows
+        pos_max = pos_min + min(column_number, num_long_col)
+        if column_number > num_short_col:
+            pos_min += column_number - num_short_col
+        adj[column_number] = (pos_min, pos_max)
     return adj
 
 def score_bigram(column_i, column_j):
@@ -82,14 +82,15 @@ def adj_score(key):
         score += scores[(i, j)]
     return score
 
-def align_score(key):
-    long_columns = key[:num_long_col]
+def align_score(key, key_len, num_long_col, offset):
+    long_columns = set(key[:num_long_col])
     align = count = 0
     for x in range(key_len-1):
         i, j = key[x], key[x+1]
-        k, l = sorted((i,j))
-        col = sum(1 for c in range(k, l) if c in long_columns)
-        if col == offset[(i, j)]:
+        k, l = (j, i) if i > j else (i, j)
+        columns = set(range(k, l))
+        number_of_columns = len(long_columns & columns)
+        if number_of_columns == offset[(i, j)]:
             align += 2
             if count > 0:
                 align += 1
@@ -98,7 +99,7 @@ def align_score(key):
             count = 0
     return align
 
-attempts = 100
+attempts = 10
 passed = 0
 for _ in range(attempts):
     bigrams, _, floor, _ = tools.create_ngram_attributes(ev_file, 1)
@@ -112,7 +113,7 @@ for _ in range(attempts):
 
     best_key = tuple(random.sample(sequence, key_len))
     best_score = adj_score(best_key) - 100
-    best_align = align_score(best_key)
+    best_align = align_score(best_key, key_len, num_long_col, offset)
 
     flag = True
     stage = 0
@@ -121,6 +122,7 @@ for _ in range(attempts):
         stage += 1
         #print(stage)
         key = [*best_key]
+        #segment slide
         for l in range(1, key_len):
             for p in range(key_len - l):
                 for s in range(1, key_len - l - p + 1):
@@ -128,13 +130,14 @@ for _ in range(attempts):
                     new_key = new_key[0:p+s] + key[p:p+l] + new_key[p+s:]
                     new_score = adj_score(new_key)
                     if new_score > best_score:
-                        align = align_score(new_key)
+                        align = align_score(new_key, key_len, num_long_col, offset)
                         if align > best_align - 3:
                             best_score, best_key = new_score, [*new_key]
                             best_align = align
                             flag = True
 
         key = [*best_key]
+        # segment swap
         for l in range(1, int(key_len / 2) + 1):
             for p1 in range(key_len - 2 * l + 1):
                 for p2 in range(p1 + l, key_len - l + 1):
@@ -143,13 +146,14 @@ for _ in range(attempts):
                                                         new_key[p1:p1+l])
                     new_score = adj_score(new_key)
                     if new_score > best_score:
-                        align = align_score(new_key)
+                        align = align_score(new_key, key_len, num_long_col, offset)
                         if align > best_align - 3:
                             best_score, best_key = new_score, [*new_key]
                             best_align = align
                             flag = True
         #print(best_align, best_score)
         key = [*best_key]
+        # segment slide
         for l in range(1, key_len):
             if align == max_align:
                 break
@@ -157,7 +161,7 @@ for _ in range(attempts):
                 for s in range(1, key_len - l - p + 1):
                     new_key = key[0:p] + key[p+l:]
                     new_key = new_key[0:p+s] + key[p:p+l] + new_key[p+s:]
-                    align = align_score(new_key)
+                    align = align_score(new_key, key_len, num_long_col, offset)
                     if align > best_align:
                         new_score = adj_score(new_key)
                         if new_score > new_score - 10:
@@ -166,6 +170,7 @@ for _ in range(attempts):
                             flag = True
 
         key = [*best_key]
+        # segment swap
         for l in range(1, int(key_len / 2) + 1):
             if align == max_align:
                 break
@@ -174,7 +179,7 @@ for _ in range(attempts):
                     new_key = [*key]
                     new_key[p1:p1+l], new_key[p2:p2+l] = (new_key[p2:p2+l],
                                                         new_key[p1:p1+l])
-                    align = align_score(new_key)
+                    align = align_score(new_key, key_len, num_long_col, offset)
                     if align > best_align:
                         new_score = adj_score(new_key)
                         if new_score > new_score - 10:
@@ -199,6 +204,7 @@ for _ in range(attempts):
     while flag:
         flag = False
         key = [*best_key]
+        # segment slide
         for l in range(1, key_len):
             for p in range(key_len - l):
                 for s in range(1, key_len - l - p + 1):
@@ -215,6 +221,7 @@ for _ in range(attempts):
             if flag:
                 break
         key = [*best_key]
+        # segment swap
         for l in range(1, int(key_len / 2) + 1):
             for p1 in range(key_len - 2 * l + 1):
                 for p2 in range(p1 + l, key_len - l + 1):

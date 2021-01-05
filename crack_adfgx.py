@@ -29,7 +29,7 @@ def score_key(key, ngram_size):
 #swaps 2 segments of various lengths and positions, all permutations
 def segment_swap(fixed_key):
     for l in range(1, int(key_len / 2) + 1):
-        for p1 in range(0, key_len - 2 * l + 1):
+        for p1 in range(key_len - 2 * l + 1):
             for p2 in range(p1 + l, key_len - l + 1):
                 key = [*fixed_key]
                 key[p1:p1+l], key[p2:p2+l] = (key[p2:p2+l], key[p1:p1+l])
@@ -42,12 +42,12 @@ def segment_swap(fixed_key):
 
 if key_len == 1:
     results = defaultdict(int)
-    for rounds in range(5):
+    for _ in range(5):
         record_score = 0
         for key_len in range(2, 26):
             key_sequence = [*range(key_len)]
             best_score = 0
-            for n in range(100):
+            for _ in range(100):
                 key = random.sample(key_sequence, key_len)
                 best_key, best_score, flag = score_key(key, 2)
             for key in segment_swap(best_key):
@@ -71,7 +71,7 @@ def element_swap(fixed_key):
 # slides segments of all lengths and starting positions
 def segment_slide(fixed_key):
     for l in range(1, key_len):
-        for p in range(0, key_len - l):
+        for p in range(key_len - l):
             for s in range(1, key_len - l - p + 1):
                 key = fixed_key[0:p] + fixed_key[p+l:]
                 key = key[0:p+s] + fixed_key[p:p+l] + key[p+s:]
@@ -80,7 +80,7 @@ def segment_slide(fixed_key):
 # rotate (cyclically) segments of all lengths and positions
 def segment_rotate(fixed_key):
     for l in range(2, key_len + 1):
-        for p in range(0, key_len + 1 - l):
+        for p in range(key_len + 1 - l):
             key = [*fixed_key]
             for _ in range(l-1):
                 key[p:p+l] = key[p+l-1:p+l] + key[p:p+l-1]
@@ -96,7 +96,7 @@ while record_score < 0.0075:
     rounds += 1
     best_score = 0
     # generates 10,000 initial keys and chooses 'best'
-    for n in range(10000):
+    for _ in range(10000):
         key = random.sample(key_sequence, key_len)
         best_key, best_score, flag = score_key(key, 4)
     flag = True
@@ -204,7 +204,7 @@ def swap_letters(key):
     key[y], key[x] = key[x], key[y]
     return key
 
-for x in range(6):
+for _ in range(6):
     current_key = set_key(frequencies, ev_list)
     plain_text = decrypt(cipher_text, current_key)
     current_score = fitness.score(plain_text)

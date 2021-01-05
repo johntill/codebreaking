@@ -56,7 +56,7 @@ def ngram_freq_counter(text, ngram_size, step=1):
     return n_grams
 
 # Create array and attributes for Ngram scoring.
-def ngram_create_scoring_attributes(ngram_file, text_len):
+def create_ngram_attributes(ngram_file, text_len):
     ngrams = {}
     with open(ngram_file, 'r', encoding='utf8', errors='ignore') as f:
         for line in f:

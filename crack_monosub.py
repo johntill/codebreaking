@@ -3,13 +3,13 @@ import timeit
 code_to_test = """
 import re
 import random
-import cipher_tools as ct
+import cipher_tools as tools
 
 cipher_file = 'texts/Code_texts/subtest4.txt'
 ev_file = 'texts/Frequencies/english_monograms.txt'
 ngram_file = 'texts/Frequencies/english_quadgrams.txt'
 
-cipher_text = ct.import_cipher(cipher_file)
+cipher_text = tools.import_cipher(cipher_file)
 
 alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 alphabet_sequence = list(range(len(alphabet)))
@@ -43,14 +43,14 @@ def swap_letters(key, alphabet_sequence):
     key[y], key[x] = key[x], key[y]
     return key
 
-ngram_attributes = ct.create_ngram_attributes(ngram_file, text_len)
-ngram_score_text = ct.ngram_score_text
-frequencies = ct.frequency_analysis(cipher_text, alphabet)
+ngram_attributes = tools.create_ngram_attributes(ngram_file, text_len)
+ngram_score_text = tools.ngram_score_text
+frequencies = tools.frequency_analysis(cipher_text, alphabet)
 ev_list = letter_expected_values(ev_file, alphabet)
 best_score = -10_000_000
 
 for x in range(4):
-    current_key = set_key(frequencies, ngrams_ev)
+    current_key = set_key(frequencies, ev_list)
     plain_text = decrypt(cipher_text, current_key)
     current_score = ngram_score_text(plain_text, ngram_attributes)
     for i in range(4000):

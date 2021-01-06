@@ -2,7 +2,7 @@ import timeit
 
 code_to_test = """
 
-import cipher_tools as ct
+import cipher_tools as tools
 
 cipher_file = 'texts/Code_texts/Caesartest1.txt'
 ev_file = 'texts/Frequencies/english_monograms.txt'
@@ -14,14 +14,14 @@ def decipher(text, alphabet, shift):
 
 def score_caesar(text, ngrams_ev, alphabet, shift):
     plaintext = decipher(text, alphabet, shift)
-    freq = ct.frequency_analysis(plaintext, alphabet)
-    chi_two = ct.chi_squared(freq, ngrams_ev)
+    freq = tools.frequency_analysis(plaintext, alphabet)
+    chi_two = tools.chi_squared(freq, ngrams_ev)
     return chi_two, shift
 
-text = ct.import_cipher(cipher_file)
+text = tools.import_cipher(cipher_file)
 text_len = len(text)
 
-ngrams_ev = ct.expected_values(ev_file, text_len)
+ngrams_ev = tools.expected_values(ev_file, text_len)
 alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
 scores = [score_caesar(text, ngrams_ev, alphabet, shift) for shift in range(26)]

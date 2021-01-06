@@ -89,7 +89,7 @@ def segment_rotate(fixed_key):
 # 1st part of program to undo transposition phase
 # runs until quad_score is 0.0075 or greater
 functions = [element_swap, segment_slide, segment_swap, segment_rotate]
-key_sequence = list(range(key_len))
+key = list(range(key_len))
 record_score = 0
 rounds = 0
 while record_score < 0.0075:
@@ -97,7 +97,7 @@ while record_score < 0.0075:
     best_score = 0
     # generates 10,000 initial keys and chooses 'best'
     for _ in range(10000):
-        key = random.sample(key_sequence, key_len)
+        random.shuffle(key)
         best_key, best_score, flag = score_key(key, 4)
     flag = True
     while flag:
@@ -208,7 +208,7 @@ for _ in range(6):
     current_key = set_key(frequencies, ev_list)
     plain_text = decrypt(cipher_text, current_key)
     current_score = fitness.score(plain_text)
-    for i in range(6000):
+    for _ in range(6000):
         key = [*current_key]
         key = swap_letters(key)
         plain_text = decrypt(cipher_text, key)

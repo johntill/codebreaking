@@ -1,6 +1,6 @@
-import timeit
+# import timeit
 
-code_to_test = """
+# code_to_test = """
 import random
 import itertools
 import cipher_tools as tools
@@ -16,21 +16,21 @@ ngram_file = 'texts/Frequencies/english_quadgrams.txt'
 text = tools.import_cipher(cipher_file)
 
 def decipher(text, key, text_len, full_rows, num_long_col):
-    ord_key = set(key)
+    ord_key = sorted(key)
     plain = [None] * text_len
     x = 0
     for char in ord_key:
         i = key.index(char)
-        new_col = full_rows + 1 if i < num_long_col else full_rows
-        plain[i::key_len] = text[x:x + new_col]
-        x += new_col
+        col_len = full_rows+1 if i < num_long_col else full_rows
+        plain[i::key_len] = text[x:x + col_len]
+        x += col_len
     return ''.join(plain)
 
 def calculate_pos_min_max(key_len, full_rows, num_long_col):
     # calculates the minimum and maximum starting positions
     # in the text for each column
     num_short_col = key_len - num_long_col
-    adj = [None] * key_len
+    adj = {}
     for column_number in range(key_len):
         pos_min = column_number * full_rows
         pos_max = pos_min + min(column_number, num_long_col)
@@ -49,24 +49,26 @@ def score_bigram(bigrams, column_i, column_j):
     return score
 
 def bi_score(text, key_len, full_rows, num_long_col, bigrams):
-
+    # key_len, full_rows, num_long_col
     adj = calculate_pos_min_max(key_len, full_rows, num_long_col)
-        
+    # key_len
+    column_combos = itertools.permutations(range(key_len), 2)
+
+    # column_combos, adj, text, full_rows, num_long_col, bigrams
     scores = {}
     offset = {}
-    col_len = full_rows + 1
-    column_combos = itertools.permutations(range(key_len), 2)
     for i, j in column_combos:
         pos_min_i, pos_max_i = adj[i]
         pos_min_j, pos_max_j = adj[j]
-        for pos_i in range(pos_min_i, pos_max_i + 1):
-            for pos_j in range(pos_min_j, pos_max_j + 1):
+        for pos_i in range(pos_min_i, pos_max_i+1):
+            column_i = text[pos_i:pos_i+full_rows+1]
+            for pos_j in range(pos_min_j, pos_max_j+1):
                 off = abs(pos_j - pos_i) % full_rows
                 if off <= num_long_col:
-                    column_i = text[pos_i:pos_i+col_len]
-                    column_j = text[pos_j:pos_j+col_len]
+                    column_j = text[pos_j:pos_j+full_rows+1]
 
                     total_score = score_bigram(bigrams, column_i, column_j)
+
                     if (i, j) in scores:
                         if total_score > scores[(i, j)]:
                             scores[(i, j)] = total_score
@@ -100,10 +102,25 @@ def align_score(key, key_len, num_long_col, offset):
             count = 0
     return align
 
+def segment_slide(fixed_key):
+    for l in range(1, key_len):
+        for p in range(key_len - l):
+            for s in range(1, key_len - l - p + 1):
+                key = fixed_key[0:p] + fixed_key[p+l:]
+                key = key[0:p+s] + fixed_key[p:p+l] + key[p+s:]
+                yield key
 
-for threshold in range(23, 24, 1):
+def segment_swap(fixed_key):
+    for l in range(1, int(key_len / 2) + 1):
+        for p1 in range(key_len - 2 * l + 1):
+            for p2 in range(p1 + l, key_len - l + 1):
+                key = [*fixed_key]
+                key[p1:p1+l], key[p2:p2+l] = (key[p2:p2+l], key[p1:p1+l])
+                yield key
+
+attempts = 1
+for threshold in range(0, 1, 1):
     start = time.perf_counter()
-    attempts = 100
     passed = 0
     for _ in range(attempts):
         bigrams, _, floor, _ = tools.create_ngram_attributes(ev_file, 1)
@@ -111,86 +128,44 @@ for threshold in range(23, 24, 1):
         full_rows, num_long_col = divmod(text_len, key_len)
         # sets the maximum possible align score
         max_align = (key_len - 1) * 3 - 1
-        
+
         scores, offset = bi_score(text, key_len, full_rows, num_long_col, bigrams)
 
         best_key = list(range(key_len))
         random.shuffle(best_key)
-        best_score = adj_score(best_key, key_len, scores) - 30
+        best_score = adj_score(best_key, key_len, scores) - 20
         best_align = align_score(best_key, key_len, num_long_col, offset)
-
+        functions = [segment_slide, segment_swap]
         flag = True
         stage = 0
         while flag:
             flag = False
             stage += 1
             #print(stage)
-            key = [*best_key]
-            #segment slide
-            for l in range(1, key_len):
-                for p in range(key_len - l):
-                    for s in range(1, key_len - l - p + 1):
-                        new_key = key[0:p] + key[p+l:]
-                        new_key = new_key[0:p+s] + key[p:p+l] + new_key[p+s:]
-                        new_score = adj_score(new_key, key_len, scores)
-                        if new_score > best_score:
-                            align = align_score(new_key, key_len, num_long_col, offset)
-                            if align > best_align - 6:
-                                best_score, best_key = new_score, [*new_key]
-                                best_align = align
-                                flag = True
+            for func in functions:
+                for new_key in func(best_key):
+                    new_score = adj_score(new_key, key_len, scores)
+                    if new_score > best_score:
+                        align = align_score(new_key, key_len, num_long_col, offset)
+                        if align > best_align - 5:
+                            best_score, best_key = new_score, [*new_key]
+                            best_align = align
+                            flag = True
 
-            key = [*best_key]
-            # segment swap
-            for l in range(1, int(key_len / 2) + 1):
-                for p1 in range(key_len - 2 * l + 1):
-                    for p2 in range(p1 + l, key_len - l + 1):
-                        new_key = [*key]
-                        new_key[p1:p1+l], new_key[p2:p2+l] = (new_key[p2:p2+l],
-                                                            new_key[p1:p1+l])
-                        new_score = adj_score(new_key, key_len, scores)
-                        if new_score > best_score:
-                            align = align_score(new_key, key_len, num_long_col, offset)
-                            if align > best_align - 6:
-                                best_score, best_key = new_score, [*new_key]
-                                best_align = align
-                                flag = True
             #print(best_align, best_score)
-            key = [*best_key]
-            # segment slide
-            for l in range(1, key_len):
-                if align == max_align:
-                    break
-                for p in range(key_len - l):
-                    for s in range(1, key_len - l - p + 1):
-                        new_key = key[0:p] + key[p+l:]
-                        new_key = new_key[0:p+s] + key[p:p+l] + new_key[p+s:]
-                        align = align_score(new_key, key_len, num_long_col, offset)
-                        if align > best_align:
-                            new_score = adj_score(new_key, key_len, scores)
-                            if new_score > new_score - threshold:
-                                best_score, best_key = new_score, [*new_key]
-                                best_align = align
-                                flag = True
 
-            key = [*best_key]
-            # segment swap
-            for l in range(1, int(key_len / 2) + 1):
-                if align == max_align:
-                    break
-                for p1 in range(key_len - 2 * l + 1):
-                    for p2 in range(p1 + l, key_len - l + 1):
-                        new_key = [*key]
-                        new_key[p1:p1+l], new_key[p2:p2+l] = (new_key[p2:p2+l],
-                                                            new_key[p1:p1+l])
-                        align = align_score(new_key, key_len, num_long_col, offset)
-                        if align > best_align:
-                            new_score = adj_score(new_key, key_len, scores)
-                            if new_score > new_score - threshold:
-                                best_score, best_key = new_score, [*new_key]
-                                best_align = align
-                                flag = True
-        
+            for func in functions:
+                for new_key in func(best_key):
+                    if align == max_align:
+                        break
+                    align = align_score(new_key, key_len, num_long_col, offset)
+                    if align > best_align:
+                        new_score = adj_score(new_key, key_len, scores)
+                        if new_score > new_score - 23:
+                            best_score, best_key = new_score, [*new_key]
+                            best_align = align
+                            flag = True
+
             #print(best_align, best_score)
             if stage == 30:
                 break
@@ -207,49 +182,20 @@ for threshold in range(23, 24, 1):
         flag = True
         while flag:
             flag = False
-            key = [*best_key]
-            # segment slide
-            for l in range(1, key_len):
-                for p in range(key_len - l):
-                    for s in range(1, key_len - l - p + 1):
-                        new_key = key[0:p] + key[p+l:]
-                        new_key = new_key[0:p+s] + key[p:p+l] + new_key[p+s:]
-                        plain_text = decipher(text, new_key, text_len, full_rows, num_long_col)
-                        candidate_score = score_text(plain_text, attributes)
-                        if candidate_score > best_score:
-                            best_score, best_key = candidate_score, [*new_key]
-                            flag = True
-                            break
-                    if flag:
-                        break
-                if flag:
-                    break
-            key = [*best_key]
-            # segment swap
-            for l in range(1, int(key_len / 2) + 1):
-                for p1 in range(key_len - 2 * l + 1):
-                    for p2 in range(p1 + l, key_len - l + 1):
-                        new_key = [*key]
-                        new_key[p1:p1+l], new_key[p2:p2+l] = (new_key[p2:p2+l],
-                                                            new_key[p1:p1+l])
-                        plain_text = decipher(text, new_key, text_len, full_rows, num_long_col)
-                        candidate_score = score_text(plain_text, attributes)
-                        if candidate_score > best_score:
-                            best_score, best_key = candidate_score, [*new_key]
-                            flag = True
-                            break
-                    if flag:
-                        break
-                if flag:
-                    break
+            for func in functions:
+                for new_key in func(best_key):
+                    plain_text = decipher(text, new_key, text_len, full_rows, num_long_col)
+                    candidate_score = score_text(plain_text, attributes)
+                    if candidate_score > best_score:
+                        best_score, best_key = candidate_score, [*new_key]
+                        flag = True
 
-        #key = [*best_key]
-        #key = key[1:] + key[0:1]
-        #plain_text = decipher(text, key)
-        #candidate_score = quad_fitness.score(plain_text)
-        #if candidate_score > best_score:
-        #    best_score = candidate_score
-        #    best_key = [*key]
+        key = best_key[1:] + best_key[0:1]
+        plain_text = decipher(text, key, text_len, full_rows, num_long_col)
+        candidate_score = score_text(plain_text, attributes)
+        if candidate_score > best_score:
+           best_score, best_key = candidate_score, [*key]
+           best_key = [*key]
 
         # plain_text = decipher(text, best_key)
         # print(best_key)
@@ -260,7 +206,7 @@ for threshold in range(23, 24, 1):
 
     end = time.perf_counter()
     print(f'{threshold} - Passed {passed}/{attempts} = {passed/attempts*100}% - {end-start}s')
-"""
+# """
 
-elapsed_time = timeit.timeit(code_to_test, number = 1)#/1000
-print(elapsed_time)
+# elapsed_time = timeit.timeit(code_to_test, number = 1)#/1000
+# print(elapsed_time)

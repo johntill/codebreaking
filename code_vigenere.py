@@ -12,21 +12,21 @@ class Vigenere:
            'R':17,'S':18,'T':19,'U':20,'V':21,'W':22,'X':23,'Y':24,'Z':25}
 
     def encipher(self, text):
-        trans_text = [None] * len(text)
+        translated_text = [None] * len(text)
         for i, c in enumerate(self.key):
             section = text[i::self.key_len]
             shifted_alphabet = (self.alphabet[self.letters[c]:]
                                 + self.alphabet[:self.letters[c]])
             table = str.maketrans(self.alphabet, shifted_alphabet)
-            trans_text[i::self.key_len] = section.translate(table)
-        return ''.join(trans_text)
+            translated_text[i::self.key_len] = section.translate(table)
+        return ''.join(translated_text)
 
     def decipher(self, text):
-        trans_text = [None] * len(text)
+        translated_text = [None] * len(text)
         for i, c in enumerate(self.key):
             section = text[i::self.key_len]
             shifted_alphabet = (self.alphabet[self.letters[c]:]
                                 + self.alphabet[:self.letters[c]])
             table = str.maketrans(shifted_alphabet, self.alphabet)
-            trans_text[i::self.key_len] = section.translate(table)
-        return ''.join(trans_text)
+            translated_text[i::self.key_len] = section.translate(table)
+        return ''.join(translated_text)

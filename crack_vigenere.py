@@ -10,7 +10,7 @@ ngram_file = 'texts/Frequencies/english_quadgrams.txt'
 text = ct.import_cipher(cipher_file)
 text_len = len(text)
 
-ngram_attributes = ct.ngram_create_scoring_attributes(ngram_file, text_len)
+ngram_attributes = ct.create_ngram_attributes(ngram_file, text_len)
 
 ngram_score_text = ct.ngram_score_text
 frequency_analysis = ct.frequency_analysis

@@ -1,19 +1,25 @@
-import timeit
+import time
+import cipher_tools as tools
+import ngram_score as ns
 
-code_to_test = """
-import random
+cipher_file = 'texts/Plain_texts/dracula.txt'
+ngram_file = 'texts/Frequencies/english_quadgrams.txt'
 
-key_len = 50
+text = tools.import_cipher(cipher_file)
+text_len = len(text)
 
-for _ in range(100_000):
-    a = list(range(key_len))
-    #b = random.sample(a, key_len)
-    random.shuffle(a)
+attributes = tools.create_ngram_attributes(ngram_file, text_len)
+score_text = tools.ngram_score_text
 
-#print(a)
-#print(b)
+#fitness = ns.NgramScore(ngram_file)
 
-"""
+start = time.perf_counter()
+for _ in range(5):
+    score = score_text(text, attributes)
+    #score = fitness.score(text)
 
-elapsed_time = timeit.timeit(code_to_test, number = 1)#/1000
-print(elapsed_time)
+# print(score)
+
+
+end = time.perf_counter()
+print(f'{end-start}s')

@@ -2,19 +2,19 @@ import timeit
 
 code_to_test = """
 
-import cipher_tools as ct
+import cipher_tools as tools
 
 cipher_file = 'texts/Code_texts/vigtest1.txt'
 ngram_file = 'texts/Frequencies/english_quadgrams.txt'
 
-text = ct.import_cipher(cipher_file)
+text = tools.import_cipher(cipher_file)
 text_len = len(text)
 
-ngram_attributes = ct.ngram_create_scoring_attributes(ngram_file, text_len)
+ngram_attributes = tools.create_ngram_attributes(ngram_file, text_len)
 
-ngram_score_text = ct.ngram_score_text
-frequency_analysis = ct.frequency_analysis
-calculate_IC = ct.calculate_IC
+ngram_score_text = tools.ngram_score_text
+frequency_analysis = tools.frequency_analysis
+calculate_IC = tools.calculate_IC
 
 alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 letters = {'A':0,'B':1,'C':2,'D':3,'E':4,'F':5,'G':6,'H':7,'I':8,'J':9,'K':10,

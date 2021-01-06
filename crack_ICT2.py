@@ -4,6 +4,7 @@ code_to_test = """
 import random
 import itertools
 import cipher_tools as tools
+import time
 from math import log10
 
 key_len = 12
@@ -38,7 +39,7 @@ def calculate_pos_min_max(key_len, full_rows, num_long_col):
         adj[column_number] = (pos_min, pos_max)
     return adj
 
-def score_bigram(column_i, column_j):
+def score_bigram(bigrams, column_i, column_j):
     score = 0
     for char_a, char_b in zip(column_i, column_j):
         try:
@@ -47,7 +48,7 @@ def score_bigram(column_i, column_j):
             score += floor
     return score
 
-def bi_score(text, key_len, full_rows, num_long_col):
+def bi_score(text, key_len, full_rows, num_long_col, bigrams):
 
     adj = calculate_pos_min_max(key_len, full_rows, num_long_col)
         
@@ -65,7 +66,7 @@ def bi_score(text, key_len, full_rows, num_long_col):
                     column_i = text[pos_i:pos_i+col_len]
                     column_j = text[pos_j:pos_j+col_len]
 
-                    total_score = score_bigram(column_i, column_j)
+                    total_score = score_bigram(bigrams, column_i, column_j)
                     if (i, j) in scores:
                         if total_score > scores[(i, j)]:
                             scores[(i, j)] = total_score
@@ -75,7 +76,7 @@ def bi_score(text, key_len, full_rows, num_long_col):
                         offset[(i, j)] = off
     return scores, offset
 
-def adj_score(key):
+def adj_score(key, key_len, scores):
     score = 0
     for x in range(key_len-1):
         i, j = key[x], key[x+1]
@@ -99,162 +100,166 @@ def align_score(key, key_len, num_long_col, offset):
             count = 0
     return align
 
-attempts = 10
-passed = 0
-for _ in range(attempts):
-    bigrams, _, floor, _ = tools.create_ngram_attributes(ev_file, 1)
-    text_len = len(text)
-    full_rows, num_long_col = divmod(text_len, key_len)
-    # sets the maximum possible align score
-    max_align = (key_len - 1) * 3 - 1
-    sequence = list(range(key_len))
 
-    scores, offset = bi_score(text, key_len, full_rows, num_long_col)
+for threshold in range(23, 24, 1):
+    start = time.perf_counter()
+    attempts = 100
+    passed = 0
+    for _ in range(attempts):
+        bigrams, _, floor, _ = tools.create_ngram_attributes(ev_file, 1)
+        text_len = len(text)
+        full_rows, num_long_col = divmod(text_len, key_len)
+        # sets the maximum possible align score
+        max_align = (key_len - 1) * 3 - 1
+        
+        scores, offset = bi_score(text, key_len, full_rows, num_long_col, bigrams)
 
-    best_key = tuple(random.sample(sequence, key_len))
-    best_score = adj_score(best_key) - 100
-    best_align = align_score(best_key, key_len, num_long_col, offset)
+        best_key = list(range(key_len))
+        random.shuffle(best_key)
+        best_score = adj_score(best_key, key_len, scores) - 30
+        best_align = align_score(best_key, key_len, num_long_col, offset)
 
-    flag = True
-    stage = 0
-    while flag:
-        flag = False
-        stage += 1
-        #print(stage)
-        key = [*best_key]
-        #segment slide
-        for l in range(1, key_len):
-            for p in range(key_len - l):
-                for s in range(1, key_len - l - p + 1):
-                    new_key = key[0:p] + key[p+l:]
-                    new_key = new_key[0:p+s] + key[p:p+l] + new_key[p+s:]
-                    new_score = adj_score(new_key)
-                    if new_score > best_score:
+        flag = True
+        stage = 0
+        while flag:
+            flag = False
+            stage += 1
+            #print(stage)
+            key = [*best_key]
+            #segment slide
+            for l in range(1, key_len):
+                for p in range(key_len - l):
+                    for s in range(1, key_len - l - p + 1):
+                        new_key = key[0:p] + key[p+l:]
+                        new_key = new_key[0:p+s] + key[p:p+l] + new_key[p+s:]
+                        new_score = adj_score(new_key, key_len, scores)
+                        if new_score > best_score:
+                            align = align_score(new_key, key_len, num_long_col, offset)
+                            if align > best_align - 6:
+                                best_score, best_key = new_score, [*new_key]
+                                best_align = align
+                                flag = True
+
+            key = [*best_key]
+            # segment swap
+            for l in range(1, int(key_len / 2) + 1):
+                for p1 in range(key_len - 2 * l + 1):
+                    for p2 in range(p1 + l, key_len - l + 1):
+                        new_key = [*key]
+                        new_key[p1:p1+l], new_key[p2:p2+l] = (new_key[p2:p2+l],
+                                                            new_key[p1:p1+l])
+                        new_score = adj_score(new_key, key_len, scores)
+                        if new_score > best_score:
+                            align = align_score(new_key, key_len, num_long_col, offset)
+                            if align > best_align - 6:
+                                best_score, best_key = new_score, [*new_key]
+                                best_align = align
+                                flag = True
+            #print(best_align, best_score)
+            key = [*best_key]
+            # segment slide
+            for l in range(1, key_len):
+                if align == max_align:
+                    break
+                for p in range(key_len - l):
+                    for s in range(1, key_len - l - p + 1):
+                        new_key = key[0:p] + key[p+l:]
+                        new_key = new_key[0:p+s] + key[p:p+l] + new_key[p+s:]
                         align = align_score(new_key, key_len, num_long_col, offset)
-                        if align > best_align - 3:
-                            best_score, best_key = new_score, [*new_key]
-                            best_align = align
-                            flag = True
+                        if align > best_align:
+                            new_score = adj_score(new_key, key_len, scores)
+                            if new_score > new_score - threshold:
+                                best_score, best_key = new_score, [*new_key]
+                                best_align = align
+                                flag = True
 
-        key = [*best_key]
-        # segment swap
-        for l in range(1, int(key_len / 2) + 1):
-            for p1 in range(key_len - 2 * l + 1):
-                for p2 in range(p1 + l, key_len - l + 1):
-                    new_key = [*key]
-                    new_key[p1:p1+l], new_key[p2:p2+l] = (new_key[p2:p2+l],
-                                                        new_key[p1:p1+l])
-                    new_score = adj_score(new_key)
-                    if new_score > best_score:
+            key = [*best_key]
+            # segment swap
+            for l in range(1, int(key_len / 2) + 1):
+                if align == max_align:
+                    break
+                for p1 in range(key_len - 2 * l + 1):
+                    for p2 in range(p1 + l, key_len - l + 1):
+                        new_key = [*key]
+                        new_key[p1:p1+l], new_key[p2:p2+l] = (new_key[p2:p2+l],
+                                                            new_key[p1:p1+l])
                         align = align_score(new_key, key_len, num_long_col, offset)
-                        if align > best_align - 3:
-                            best_score, best_key = new_score, [*new_key]
-                            best_align = align
-                            flag = True
-        #print(best_align, best_score)
-        key = [*best_key]
-        # segment slide
-        for l in range(1, key_len):
-            if align == max_align:
+                        if align > best_align:
+                            new_score = adj_score(new_key, key_len, scores)
+                            if new_score > new_score - threshold:
+                                best_score, best_key = new_score, [*new_key]
+                                best_align = align
+                                flag = True
+        
+            #print(best_align, best_score)
+            if stage == 30:
                 break
-            for p in range(key_len - l):
-                for s in range(1, key_len - l - p + 1):
-                    new_key = key[0:p] + key[p+l:]
-                    new_key = new_key[0:p+s] + key[p:p+l] + new_key[p+s:]
-                    align = align_score(new_key, key_len, num_long_col, offset)
-                    if align > best_align:
-                        new_score = adj_score(new_key)
-                        if new_score > new_score - 10:
-                            best_score, best_key = new_score, [*new_key]
-                            best_align = align
+
+        plain_text = decipher(text, best_key, text_len, full_rows, num_long_col)
+        # print(best_key)
+        # print(plain_text)
+        # print(best_align, best_score)
+
+        attributes = tools.create_ngram_attributes(ngram_file, text_len)
+        score_text = tools.ngram_score_text
+        best_score = score_text(plain_text, attributes)
+
+        flag = True
+        while flag:
+            flag = False
+            key = [*best_key]
+            # segment slide
+            for l in range(1, key_len):
+                for p in range(key_len - l):
+                    for s in range(1, key_len - l - p + 1):
+                        new_key = key[0:p] + key[p+l:]
+                        new_key = new_key[0:p+s] + key[p:p+l] + new_key[p+s:]
+                        plain_text = decipher(text, new_key, text_len, full_rows, num_long_col)
+                        candidate_score = score_text(plain_text, attributes)
+                        if candidate_score > best_score:
+                            best_score, best_key = candidate_score, [*new_key]
                             flag = True
-
-        key = [*best_key]
-        # segment swap
-        for l in range(1, int(key_len / 2) + 1):
-            if align == max_align:
-                break
-            for p1 in range(key_len - 2 * l + 1):
-                for p2 in range(p1 + l, key_len - l + 1):
-                    new_key = [*key]
-                    new_key[p1:p1+l], new_key[p2:p2+l] = (new_key[p2:p2+l],
-                                                        new_key[p1:p1+l])
-                    align = align_score(new_key, key_len, num_long_col, offset)
-                    if align > best_align:
-                        new_score = adj_score(new_key)
-                        if new_score > new_score - 10:
-                            best_score, best_key = new_score, [*new_key]
-                            best_align = align
-                            flag = True
-    
-        #print(best_align, best_score)
-        if stage == 30:
-            break
-
-    plain_text = decipher(text, best_key, text_len, full_rows, num_long_col)
-    # print(best_key)
-    # print(plain_text)
-    # print(best_align, best_score)
-
-    attributes = tools.create_ngram_attributes(ngram_file, text_len)
-    score_text = tools.ngram_score_text
-    best_score = score_text(plain_text, attributes)
-
-    flag = True
-    while flag:
-        flag = False
-        key = [*best_key]
-        # segment slide
-        for l in range(1, key_len):
-            for p in range(key_len - l):
-                for s in range(1, key_len - l - p + 1):
-                    new_key = key[0:p] + key[p+l:]
-                    new_key = new_key[0:p+s] + key[p:p+l] + new_key[p+s:]
-                    plain_text = decipher(text, new_key, text_len, full_rows, num_long_col)
-                    candidate_score = score_text(plain_text, attributes)
-                    if candidate_score > best_score:
-                        best_score, best_key = candidate_score, [*new_key]
-                        flag = True
+                            break
+                    if flag:
                         break
                 if flag:
                     break
-            if flag:
-                break
-        key = [*best_key]
-        # segment swap
-        for l in range(1, int(key_len / 2) + 1):
-            for p1 in range(key_len - 2 * l + 1):
-                for p2 in range(p1 + l, key_len - l + 1):
-                    new_key = [*key]
-                    new_key[p1:p1+l], new_key[p2:p2+l] = (new_key[p2:p2+l],
-                                                        new_key[p1:p1+l])
-                    plain_text = decipher(text, new_key, text_len, full_rows, num_long_col)
-                    candidate_score = score_text(plain_text, attributes)
-                    if candidate_score > best_score:
-                        best_score, best_key = candidate_score, [*new_key]
-                        flag = True
+            key = [*best_key]
+            # segment swap
+            for l in range(1, int(key_len / 2) + 1):
+                for p1 in range(key_len - 2 * l + 1):
+                    for p2 in range(p1 + l, key_len - l + 1):
+                        new_key = [*key]
+                        new_key[p1:p1+l], new_key[p2:p2+l] = (new_key[p2:p2+l],
+                                                            new_key[p1:p1+l])
+                        plain_text = decipher(text, new_key, text_len, full_rows, num_long_col)
+                        candidate_score = score_text(plain_text, attributes)
+                        if candidate_score > best_score:
+                            best_score, best_key = candidate_score, [*new_key]
+                            flag = True
+                            break
+                    if flag:
                         break
                 if flag:
                     break
-            if flag:
-                break
 
-    #key = [*best_key]
-    #key = key[1:] + key[0:1]
-    #plain_text = decipher(text, key)
-    #candidate_score = quad_fitness.score(plain_text)
-    #if candidate_score > best_score:
-    #    best_score = candidate_score
-    #    best_key = [*key]
+        #key = [*best_key]
+        #key = key[1:] + key[0:1]
+        #plain_text = decipher(text, key)
+        #candidate_score = quad_fitness.score(plain_text)
+        #if candidate_score > best_score:
+        #    best_score = candidate_score
+        #    best_key = [*key]
 
-    # plain_text = decipher(text, best_key)
-    # print(best_key)
-    # print(plain_text)
-    # print(best_score)
-    if best_score > -9842:
-        passed += 1
+        # plain_text = decipher(text, best_key)
+        # print(best_key)
+        # print(plain_text)
+        # print(best_score)
+        if best_score > -9842:
+            passed += 1
 
-print(f'Passed {passed}/{attempts} = {passed/attempts*100}')
+    end = time.perf_counter()
+    print(f'{threshold} - Passed {passed}/{attempts} = {passed/attempts*100}% - {end-start}s')
 """
 
 elapsed_time = timeit.timeit(code_to_test, number = 1)#/1000

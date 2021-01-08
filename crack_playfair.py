@@ -8,16 +8,18 @@ import math
 import random
 import code_playfair as playfair
 import cipher_tools as tools
-import ngram_score as ns
 
 cipher_file = 'texts/Code_texts/TCB Stage6.txt'
 ngram_file = 'texts/Frequencies/english_quintgrams.txt'
 
-# imports scoring mechanism
-fitness = ns.NgramScore(ngram_file)
-
 # loads cipher text from file and converts to uppercase
 cipher_text = tools.import_cipher(cipher_file)
+text_len = len(cipher_text)
+
+# creates variables for scoring plain texts
+attributes = tools.create_ngram_attributes(ngram_file, text_len)
+# sets function for scoring plain texts
+score_text = tools.ngram_score_text
 
 # sets alphabet to generate initial random key
 # note lack of 'J'
@@ -73,6 +75,9 @@ def T_B_mirror(key):
     key[5:10], key[15:20] = key[15:20], key[5:10]
     return key
 
+def reverse_key(key):
+    return key[::-1]
+
 def randomly_mutate(key, options):
     choice = random.randrange(0, 50)
     if choice in options:
@@ -103,47 +108,86 @@ def swap_all_columns(key):
             new_key[index::5] = key[value::5]
         yield new_key
 
+def swap_row_elements(key):
+    for i in range(0,25,5):
+        new_key = [*key]
+        perms = itertools.permutations(range(5),5)
+        for perm in perms:
+            for index, value in enumerate(perm):
+                new_key[i+index] = key[i+value]
+            yield new_key
+
+def swap_column_elements(key):
+    for i in range(5):
+        new_key = [*key]
+        perms = itertools.permutations(range(0,25,5),5)       
+        for perm in perms:
+            for index, value in enumerate(perm):
+                new_key[i+index*5] = key[i+value]
+            yield new_key
+
+def swap_4_letter_groups(key):
+    for s in range(len(key)-7):
+        s1 = key[s:s+4]
+        for p in range(s+4,len(key)-3):
+            new_key = [*key]
+            p1 = key[p:p+4]
+            new_key[s:s+4], new_key[p:p+4] = p1, s1
+            yield new_key
+
 def print_key(key):
     show_key = ''.join(key)
     for i in range(0, 25, 5):
         print(show_key[i:i+5])
     print()
 
-solutions = {}
-results = []
+def accept_number(new_score, current_score, fixed_temp):
+    if new_score > current_score:
+        return True
+    degradation = current_score - new_score
+    acceptance_probability = math.exp(-degradation / fixed_temp)
+    return acceptance_probability > 0.0085 and random.random() < acceptance_probability
 
 option_choices = ({T_B_mirror: [0], L_R_mirror: [1], TR_BL_mirror: [2, 3],
                    swap_columns: [4, 5], swap_rows: [6,7]})
 
 options = {value: key for key in option_choices for value in option_choices[key]}
 
-for number in range(1, 21):
+systematic_options = ([swap_all_elements, swap_all_rows, swap_all_columns,
+                       swap_row_elements, swap_column_elements,
+                       swap_4_letter_groups])
+
+solutions = {}
+results = []
+# sets initial temperature for simulated annealing
+T = 27
+
+for number in range(1, 4):
     print(f'Number: {number:02}')
-    # sets initial temperature for simulated annealing
-    T = 9
-    stages = 0
-    best_stage = 0
-    blank_stages = 0
+    stages = blank_stages = 0
     # creates random initial key from alphabet
-    best_key = random.sample(alphabet, 25)
+    best_key = [*alphabet]
+    random.shuffle(best_key)
     plain_text = playfair.Playfair(best_key).decipher(cipher_text)
-    best_score = fitness.score(plain_text)
-    current_key = [*best_key]
-    plain_text = playfair.Playfair(current_key).decipher(cipher_text)
-    current_score = fitness.score(plain_text)
+    best_score = score_text(plain_text, attributes)
     
 #    while T > 0:
     while best_score < -3517 and stages < 16: # -2956 quadgrams
 #    while stages < 20:
         stages += 1
-        print(f"Stage: {stages}, Blank Stages: {blank_stages}")
+        current_key = [*best_key]
+        plain_text = playfair.Playfair(current_key).decipher(cipher_text)
+        current_score = score_text(plain_text, attributes)
+        #print(f"Stage: {stages}, Blank Stages: {blank_stages}")
         for i in range(9999):
             # performs random transformation of current key
-            key = randomly_mutate([*current_key], options)
+            key = randomly_mutate(current_key, options)
             plain_text = playfair.Playfair(key).decipher(cipher_text)
-            candidate_score = fitness.score(plain_text)
-            delta_score = current_score - candidate_score
-            if delta_score < 0 or math.exp(-delta_score / T) > 0.0085:
+            candidate_score = score_text(plain_text, attributes)
+            accept = accept_number(candidate_score, current_score, T)
+            #delta_score = current_score - candidate_score
+            #if delta_score < 0 or math.exp(-delta_score / T) > 0.0085:
+            if accept:
                 current_score, current_key = candidate_score, [*key]
             if current_score > best_score:
                 best_score, best_key = current_score, [*current_key]
@@ -153,18 +197,28 @@ for number in range(1, 21):
                 # letters, then rows, then columns until no improvement
                 while flag:
                     flag = False
+                    # for func in systematic_options:
+                    #     for key in func(best_key):
+                    #         plain_text = playfair.Playfair(key).decipher(cipher_text)
+                    #         #candidate_score = fitness.score(plain_text)
+                    #         candidate_score = score_text(plain_text, attributes)
+                    #         if candidate_score > best_score:
+                    #             best_score, best_key = candidate_score, [*key]
+                    #             flag = True
+                    #             break
+
                     # cycles through all letter swaps sequentially
                     for key in swap_all_elements([*best_key]):
                         plain_text = playfair.Playfair(key).decipher(cipher_text)
-                        candidate_score = fitness.score(plain_text)
+                        candidate_score = score_text(plain_text, attributes)
                         if candidate_score > best_score:
                             best_score, best_key = candidate_score, [*key]
-                            flag = True
+                            flag = True 
                             break
                     # cycles through all row swaps sequentially
                     for key in swap_all_rows([*best_key]):
                         plain_text = playfair.Playfair(key).decipher(cipher_text)
-                        candidate_score = fitness.score(plain_text)
+                        candidate_score = score_text(plain_text, attributes)
                         if candidate_score > best_score:
                             best_score, best_key = candidate_score, [*key]
                             flag = True
@@ -172,33 +226,31 @@ for number in range(1, 21):
                     # cycles through all column swaps sequentially
                     for key in swap_all_columns([*best_key]):
                         plain_text = playfair.Playfair(key).decipher(cipher_text)
-                        candidate_score = fitness.score(plain_text)
+                        candidate_score = score_text(plain_text, attributes)
                         if candidate_score > best_score:
                             best_score, best_key = candidate_score, [*key]
                             flag = True
                             break
 
                 best_stage = stages
-                print_key(best_key)
-                plain_text = playfair.Playfair(best_key).decipher(cipher_text)
-                print(plain_text)
-                print(best_score)
-                print(T)
+                #print_key(best_key)
+                #plain_text = playfair.Playfair(best_key).decipher(cipher_text)
+                #print(plain_text)
+                #print(best_score)
+                #print(T)
                 
         #T -= 0.2
         blank_stages += 1
-        # if blank_stages == 3:
-        #     break
             
     solutions[number] = best_key
     results.append((number, best_stage, best_score))
 
-for number, key in solutions.items():
-    print(f'Solution: {number:02}')
-    print_key(key)
-    plain_text = playfair.Playfair(key).decipher(cipher_text)
-    print(plain_text)
-    print()
+# for number, key in solutions.items():
+#     print(f'Solution: {number:02}')
+#     print_key(key)
+#     plain_text = playfair.Playfair(key).decipher(cipher_text)
+#     print(plain_text)
+#     print()
 
 for (number, best_stage, best_score) in results:
     print(f"{number:02} = Best Stage: {best_stage:02} - Best Score: {best_score}")

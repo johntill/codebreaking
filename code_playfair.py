@@ -10,7 +10,7 @@ class Playfair:
         if a == b:
             b = 'X'
         arow, acol = divmod(self.key.index(a), 5)
-        brow, bcol = int(self.key.index(b) / 5), self.key.index(b) % 5
+        brow, bcol = divmod(self.key.index(b), 5)
         if arow == brow:
             return (self.key[arow*5 + (acol+1) % 5]
                   + self.key[brow*5 + (bcol+1) % 5])
@@ -22,7 +22,7 @@ class Playfair:
 
     def decipher_pair(self, a, b):
         arow, acol = divmod(self.key.index(a), 5)
-        brow, bcol = int(self.key.index(b) / 5), self.key.index(b) % 5
+        brow, bcol = divmod(self.key.index(b), 5)
         if arow == brow:
             return (self.key[arow*5 + (acol-1) % 5]
                   + self.key[brow*5 + (bcol-1) % 5])

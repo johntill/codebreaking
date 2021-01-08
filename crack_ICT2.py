@@ -5,7 +5,6 @@ import random
 import itertools
 import cipher_tools as tools
 import time
-from math import log10
 
 key_len = 12
 

@@ -25,49 +25,50 @@ score_text = tools.ngram_score_text
 # note lack of 'J'
 alphabet = "ABCDEFGHIKLMNOPQRSTUVWXYZ"
 
-def swap_all_elements(key):
+def swap_all_elements(old_key):
     perms = itertools.combinations(range(25),2)
     for x, y in perms:
-        new_key = [*key]
-        new_key[x], new_key[y] = key[y], key[x]
-        yield new_key
+        key = [*old_key]
+        key[x], key[y] = old_key[y], old_key[x]
+        yield key
 
-def swap_all_rows(key):
+def swap_all_rows(old_key):
     perms = itertools.permutations(range(0,25,5),5)
-    new_key = [None] * 25
+    key = [None] * 25
     for perm in perms:
         for index, value in enumerate(perm):
-            new_key[index*5:index*5+5] = key[value:value+5]
-        yield new_key
+            key[index*5:index*5+5] = old_key[value:value+5]
+        yield key
 
-def swap_all_columns(key):
+def swap_all_columns(old_key):
     perms = itertools.permutations(range(5),5)
-    new_key = [None] * 25
+    key = [None] * 25
     for perm in perms:
         for index, value in enumerate(perm):
-            new_key[index::5] = key[value::5]
-        yield new_key
+            key[index::5] = old_key[value::5]
+        yield key
 
-def swap_row_elements(key):
+def swap_row_elements(old_key):
     for i in range(0,25,5):
-        new_key = [*key]
+        key = [*old_key]
         perms = itertools.permutations(range(5),5)
         for perm in perms:
             for index, value in enumerate(perm):
-                new_key[i+index] = key[i+value]
-            yield new_key
+                key[i+index] = old_key[i+value]
+            yield key
 
-def swap_column_elements(key):
+def swap_column_elements(old_key):
     for i in range(5):
-        new_key = [*key]
+        key = [*old_key]
         perms = itertools.permutations(range(0,25,5),5)       
         for perm in perms:
             for index, value in enumerate(perm):
-                new_key[i+index*5] = key[i+value]
-            yield new_key
+                key[i+index*5] = old_key[i+value]
+            yield key
 
 # creates mirror of key along top left to bottom right diagonal
-def TL_BR_mirror(key):
+def TL_BR_mirror(old_key):
+    key = [*old_key]
     key[1:5], key[5::5] = key[5::5], key[1:5]
     key[7:10], key[11::5] = key[11::5], key[7:10]
     key[13:15], key[17::5] = key[17::5], key[13:15]
@@ -75,7 +76,8 @@ def TL_BR_mirror(key):
     yield key
 
 # creates mirror of key along top right to bottom left diagonal
-def TR_BL_mirror(key):
+def TR_BL_mirror(old_key):
+    key = [*old_key]
     key[0:4], key[24:4:-5] = key[24:4:-5], key[0:4]
     key[5:8], key[23:8:-5] = key[23:8:-5], key[5:8]
     key[10:12], key[22:12:-5] = key[22:12:-5], key[10:12]
@@ -83,13 +85,15 @@ def TR_BL_mirror(key):
     yield key
 
 # creates mirror of key along vertical
-def L_R_mirror(key):
+def L_R_mirror(old_key):
+    key = [*old_key]
     key[0::5], key[4::5] = key[4::5], key[0::5]
     key[1::5], key[3::5] = key[3::5], key[1::5]
     yield key
 
 # creates mirror of key along horizontal
-def T_B_mirror(key):
+def T_B_mirror(old_key):
+    key = [*old_key]
     key[0:5], key[20:25] = key[20:25], key[0:5]
     key[5:10], key[15:20] = key[15:20], key[5:10]
     yield key
@@ -103,7 +107,6 @@ def print_key(key):
 def accept_number(new_score, current_score, fixed_temp):
     if new_score > current_score:
         return True
-    #fixed_temp = 10
     degradation = current_score - new_score
     acceptance_probability = math.exp(-degradation / fixed_temp)
     return acceptance_probability > 0.0085 and random.random() < acceptance_probability
@@ -122,7 +125,7 @@ for number in range(1, 4):
     print(f'Number: {number:02}')
     stages = blank_stages = 0
     # creates random initial key from alphabet
-    best_key = list(alphabet)
+    best_key = [*alphabet]
     random.shuffle(best_key)
     plain_text = playfair.Playfair(best_key).decipher(text)
     best_score = score_text(plain_text, attributes)
@@ -131,15 +134,13 @@ for number in range(1, 4):
         stages += 1
         #print(f"Stage: {stages}, Blank Stages: {blank_stages}")
         current_key = [*best_key]
-        plain_text = playfair.Playfair(current_key).decipher(cipher_text)
+        plain_text = playfair.Playfair(current_key).decipher(text)
         current_score = score_text(plain_text, attributes)
         for option in options:
             for key in option(current_key):
                 plain_text = playfair.Playfair(key).decipher(text)
                 new_score = score_text(plain_text, attributes)
                 accept = accept_number(new_score, current_score, T)
-                #delta_score = current_score - new_score
-                #if delta_score < 0 or math.exp(-delta_score / T) > 0.0085:
                 if accept:
                     current_score, current_key = new_score, [*key]
                     #print(plain_text)

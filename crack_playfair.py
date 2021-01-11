@@ -6,6 +6,7 @@ code_to_test = """
 import itertools
 import math
 import random
+import time
 import code_playfair as playfair
 import cipher_tools as tools
 
@@ -29,26 +30,30 @@ alphabet = "ABCDEFGHIKLMNOPQRSTUVWXYZ"
 alphabet_sequence = [*range(len(alphabet))]
 
 # swap 2 letters at random
-def swap_letters(key):
+def swap_letters(old_key):
+    key = [*old_key]
     x, y = random.sample(alphabet_sequence, 2)
     key[y], key[x] = key[x], key[y]
     return key
 
 # swap 2 rows at random
-def swap_rows(key):
+def swap_rows(old_key):
+    key = [*old_key]
     x, y = random.sample(alphabet_sequence[0:5], 2)
     x, y = (x * 5), (y * 5)
     key[y:y+5], key[x:x+5] = key[x:x+5], key[y:y+5]
     return key
 
 # swap 2 columns at random
-def swap_columns(key):
+def swap_columns(old_key):
+    key = [*old_key]
     x, y = random.sample(alphabet_sequence[0:5], 2)
     key[y::5], key[x::5] = key[x::5], key[y::5]
     return key
 
 # creates mirror of key along top left to bottom right diagonal
-def TL_BR_mirror(key):
+def TL_BR_mirror(old_key):
+    key = [*old_key]
     key[1:5], key[5::5] = key[5::5], key[1:5]
     key[7:10], key[11::5] = key[11::5], key[7:10]
     key[13:15], key[17::5] = key[17::5], key[13:15]
@@ -56,7 +61,8 @@ def TL_BR_mirror(key):
     return key
 
 # creates mirror of key along top right to bottom left diagonal
-def TR_BL_mirror(key):
+def TR_BL_mirror(old_key):
+    key = [*old_key]
     key[0:4], key[24:4:-5] = key[24:4:-5], key[0:4]
     key[5:8], key[23:8:-5] = key[23:8:-5], key[5:8]
     key[10:12], key[22:12:-5] = key[22:12:-5], key[10:12]
@@ -64,13 +70,15 @@ def TR_BL_mirror(key):
     return key
 
 # creates mirror of key along vertical
-def L_R_mirror(key):
+def L_R_mirror(old_key):
+    key = [*old_key]
     key[0::5], key[4::5] = key[4::5], key[0::5]
     key[1::5], key[3::5] = key[3::5], key[1::5]
     return key
 
 # creates mirror of key along horizontal
-def T_B_mirror(key):
+def T_B_mirror(old_key):
+    key = [*old_key]
     key[0:5], key[20:25] = key[20:25], key[0:5]
     key[5:10], key[15:20] = key[15:20], key[5:10]
     return key
@@ -85,55 +93,56 @@ def randomly_mutate(key, options):
     else:
         return swap_letters(key)
 
-def swap_all_elements(key):
+def swap_all_elements(old_key):
     perms = itertools.combinations(range(25),2)
     for x, y in perms:
-        new_key = [*key]
-        new_key[x], new_key[y] = key[y], key[x]
-        yield new_key
+        key = [*old_key]
+        key[x], key[y] = key[y], key[x]
+        yield key
 
-def swap_all_rows(key):
+def swap_all_rows(old_key):
     perms = itertools.permutations(range(0,25,5),5)
-    new_key = [None] * 25
+    key = [None] * 25
     for perm in perms:
         for index, value in enumerate(perm):
-            new_key[index*5:index*5+5] = key[value:value+5]
-        yield new_key
+            key[index*5:index*5+5] = old_key[value:value+5]
+        yield key
 
-def swap_all_columns(key):
+def swap_all_columns(old_key):
     perms = itertools.permutations(range(5),5)
-    new_key = [None] * 25
+    key = [None] * 25
     for perm in perms:
         for index, value in enumerate(perm):
-            new_key[index::5] = key[value::5]
-        yield new_key
+            key[index::5] = old_key[value::5]
+        yield key
 
-def swap_row_elements(key):
+def swap_row_elements(old_key):
     for i in range(0,25,5):
-        new_key = [*key]
+        key = [*old_key]
         perms = itertools.permutations(range(5),5)
         for perm in perms:
             for index, value in enumerate(perm):
-                new_key[i+index] = key[i+value]
-            yield new_key
+                key[i+index] = old_key[i+value]
+            yield key
 
-def swap_column_elements(key):
+def swap_column_elements(old_key):
     for i in range(5):
-        new_key = [*key]
+        key = [*old_key]
         perms = itertools.permutations(range(0,25,5),5)       
         for perm in perms:
             for index, value in enumerate(perm):
-                new_key[i+index*5] = key[i+value]
-            yield new_key
+                key[i+index*5] = old_key[i+value]
+            yield key
 
-def swap_4_letter_groups(key):
-    for s in range(len(key)-7):
-        s1 = key[s:s+4]
-        for p in range(s+4,len(key)-3):
-            new_key = [*key]
-            p1 = key[p:p+4]
-            new_key[s:s+4], new_key[p:p+4] = p1, s1
-            yield new_key
+def swap_4_letter_groups(old_key):
+    key_len = len(old_key)
+    for s in range(key_len-7):
+        s1 = old_key[s:s+4]
+        for p in range(s+4, key_len-3):
+            key = [*old_key]
+            p1 = old_key[p:p+4]
+            key[s:s+4], key[p:p+4] = p1, s1
+            yield key
 
 def print_key(key):
     show_key = ''.join(key)
@@ -149,7 +158,7 @@ def accept_number(new_score, current_score, fixed_temp):
     return acceptance_probability > 0.0085 and random.random() < acceptance_probability
 
 option_choices = ({T_B_mirror: [0], L_R_mirror: [1], TR_BL_mirror: [2, 3],
-                   swap_columns: [4, 5], swap_rows: [6,7]})
+                   swap_columns: [4, 5], swap_rows: [6, 7]})
 
 options = {value: key for key in option_choices for value in option_choices[key]}
 
@@ -157,13 +166,15 @@ systematic_options = ([swap_all_elements, swap_all_rows, swap_all_columns,
                        swap_row_elements, swap_column_elements,
                        swap_4_letter_groups])
 
-solutions = {}
-results = []
+
 # sets initial temperature for simulated annealing
 T = 27
-
-for number in range(1, 4):
-    print(f'Number: {number:02}')
+solutions = {}
+results = []
+successes = 0
+for number in range(1, 3):
+    start = time.perf_counter()
+    #print(f'Number: {number:02}')
     stages = blank_stages = 0
     # creates random initial key from alphabet
     best_key = [*alphabet]
@@ -185,8 +196,6 @@ for number in range(1, 4):
             plain_text = playfair.Playfair(key).decipher(cipher_text)
             candidate_score = score_text(plain_text, attributes)
             accept = accept_number(candidate_score, current_score, T)
-            #delta_score = current_score - candidate_score
-            #if delta_score < 0 or math.exp(-delta_score / T) > 0.0085:
             if accept:
                 current_score, current_key = candidate_score, [*key]
             if current_score > best_score:
@@ -197,40 +206,39 @@ for number in range(1, 4):
                 # letters, then rows, then columns until no improvement
                 while flag:
                     flag = False
-                    # for func in systematic_options:
-                    #     for key in func(best_key):
-                    #         plain_text = playfair.Playfair(key).decipher(cipher_text)
-                    #         #candidate_score = fitness.score(plain_text)
-                    #         candidate_score = score_text(plain_text, attributes)
-                    #         if candidate_score > best_score:
-                    #             best_score, best_key = candidate_score, [*key]
-                    #             flag = True
-                    #             break
+                    for func in systematic_options:
+                        for key in func(best_key):
+                            plain_text = playfair.Playfair(key).decipher(cipher_text)
+                            candidate_score = score_text(plain_text, attributes)
+                            if candidate_score > best_score:
+                                best_score, best_key = candidate_score, [*key]
+                                flag = True
+                                break
 
-                    # cycles through all letter swaps sequentially
-                    for key in swap_all_elements([*best_key]):
-                        plain_text = playfair.Playfair(key).decipher(cipher_text)
-                        candidate_score = score_text(plain_text, attributes)
-                        if candidate_score > best_score:
-                            best_score, best_key = candidate_score, [*key]
-                            flag = True 
-                            break
-                    # cycles through all row swaps sequentially
-                    for key in swap_all_rows([*best_key]):
-                        plain_text = playfair.Playfair(key).decipher(cipher_text)
-                        candidate_score = score_text(plain_text, attributes)
-                        if candidate_score > best_score:
-                            best_score, best_key = candidate_score, [*key]
-                            flag = True
-                            break
-                    # cycles through all column swaps sequentially
-                    for key in swap_all_columns([*best_key]):
-                        plain_text = playfair.Playfair(key).decipher(cipher_text)
-                        candidate_score = score_text(plain_text, attributes)
-                        if candidate_score > best_score:
-                            best_score, best_key = candidate_score, [*key]
-                            flag = True
-                            break
+                    # # cycles through all letter swaps sequentially
+                    # for key in swap_all_elements(best_key):
+                    #     plain_text = playfair.Playfair(key).decipher(cipher_text)
+                    #     candidate_score = score_text(plain_text, attributes)
+                    #     if candidate_score > best_score:
+                    #         best_score, best_key = candidate_score, [*key]
+                    #         flag = True 
+                    #         break
+                    # # cycles through all row swaps sequentially
+                    # for key in swap_all_rows(best_key):
+                    #     plain_text = playfair.Playfair(key).decipher(cipher_text)
+                    #     candidate_score = score_text(plain_text, attributes)
+                    #     if candidate_score > best_score:
+                    #         best_score, best_key = candidate_score, [*key]
+                    #         flag = True
+                    #         break
+                    # # cycles through all column swaps sequentially
+                    # for key in swap_all_columns(best_key):
+                    #     plain_text = playfair.Playfair(key).decipher(cipher_text)
+                    #     candidate_score = score_text(plain_text, attributes)
+                    #     if candidate_score > best_score:
+                    #         best_score, best_key = candidate_score, [*key]
+                    #         flag = True
+                    #         break
 
                 best_stage = stages
                 #print_key(best_key)
@@ -243,7 +251,11 @@ for number in range(1, 4):
         blank_stages += 1
             
     solutions[number] = best_key
-    results.append((number, best_stage, best_score))
+    end = time.perf_counter()
+    time_taken = end - start
+    results.append((number, best_stage, best_score, time_taken))
+    if best_score > -3517:
+        successes += 1
 
 # for number, key in solutions.items():
 #     print(f'Solution: {number:02}')
@@ -252,9 +264,13 @@ for number in range(1, 4):
 #     print(plain_text)
 #     print()
 
-for (number, best_stage, best_score) in results:
-    print(f"{number:02} = Best Stage: {best_stage:02} - Best Score: {best_score}")
-
+total_time = 0
+print(f'Temp = {T} - Success = {successes/number*100:.2f}%')
+for (number, best_stage, best_score, time_taken) in results:
+    total_time += time_taken
+    print(f'{number:02} = Best Stage: {best_stage:02} - Best Score: {best_score:.4f} - {time_taken:.2f}s')
+print(f'Total time = {total_time:.2f}s or {total_time/number:.2f}s per attempt')
+print()
 """
 
 elapsed_time = timeit.timeit(code_to_test, number = 1)#/1000

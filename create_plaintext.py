@@ -42,6 +42,6 @@ for index, file in enumerate(input_files):
     print()
 
     # Write text to output_file
-    with open(output_file, 'w') as f:
-        f.write(cipher)
+    # with open(output_file, 'w') as f:
+    #     f.write(cipher)
 

@@ -80,10 +80,13 @@ indices = [alphabet.index(letter) for letter in low_letters]
 # current_key = set_key(frequencies, ev_list, alphabet)
 # print(f'Current  - {current_key}')
 
-cipher_scores = ({'texts/Code_texts/subtest1.txt': -1103,
-                  'texts/Code_texts/subtest2.txt': -3282,
-                  'texts/Code_texts/subtest3.txt': -355,
-                  'texts/Code_texts/subtest4.txt': -1031})
+cipher_scores = ({'texts/Code_texts/subtest1.txt': -355,
+                  'texts/Code_texts/subtest2.txt': -522,
+                  'texts/Code_texts/subtest3.txt': -1103,
+                  'texts/Code_texts/subtest4.txt': -1031,
+                  'texts/Code_texts/subtest5.txt': -1787,
+                  'texts/Code_texts/subtest6.txt': -2308,
+                  'texts/Code_texts/subtest7.txt': -3282})
 
 target_score = cipher_scores[cipher_file]
 attempts = 1000
@@ -102,8 +105,8 @@ for iterations in range(1000, 5500, 500):
         current_score = score_text(plain_text, attributes)
         count = 0
         no_improvement = 0
-        for i in range(iterations):
-        #while no_improvement < iterations:
+        #for i in range(iterations):
+        while no_improvement < iterations:
             count += 1
             key = swap_letters(current_key, alphabet_sequence)
             #key = swap_letters(current_key, weighted_ev_list)

@@ -1,6 +1,3 @@
-import timeit
-
-code_to_test = """
 # Checks all key lengths from 2-15 for CCT
 # i.e. all columns are the same length
 # change which key lengths are checked at line 81
@@ -9,6 +6,7 @@ code_to_test = """
 import re
 import itertools
 import random
+import time
 import ngram_score as ns
 
 quad_fitness = ns.NgramScore('texts/Frequencies/english_quadgrams.txt')
@@ -77,101 +75,110 @@ for item in iter:
         record_score = candidate_score
         record_key = [*item]
 
-# Min range cannot be < 3
-for key_len in range(3, 16):
-    best_score = -10_000_000
+attempts = 1
+passed = 0
+
+start = time.perf_counter()
+for _ in range(attempts):
+    # Min range cannot be < 3
+    for key_len in range(3, 16):
+        best_score = -10_000_000
+        rows = int(text_len / key_len)
+        rem = text_len % key_len
+        sequence = list(range(key_len))
+
+        # CHOOSE SCORING METHOD
+        # BI SCORES FASTER, TRI SCORES POTENTIALLY MORE ACCURATE
+        scores = bi_score(text)
+        #scores = tri_score(text)
+
+        current_key = random.sample(sequence, key_len)
+        current_score = 0
+        for x in range(key_len-1):
+            i, j = current_key[x], current_key[x+1]
+            current_score += scores[(i, j)]
+        if current_score > best_score:
+            best_score = current_score
+            best_key = [*current_key]
+        flag = True
+    #    stage = 0
+        while flag:
+            flag = False
+    #        stage += 1
+    #        print(stage)
+            key = [*best_key]
+            for l in range(1, key_len):
+                for p in range(key_len - l):
+                    for s in range(1, key_len - l - p + 1):
+                        #print (l, s, p)
+                        new_key = key[0:p] + key[p+l:]
+                        new_key = new_key[0:p+s] + key[p:p+l] + new_key[p+s:]
+                        new_score = 0
+                        for x in range(key_len-1):
+                            i, j = new_key[x], new_key[x+1]
+                            new_score += scores[(i, j)]
+                        if new_score > best_score:
+                            best_score = new_score
+                            best_key = [*new_key]
+                            flag = True
+                            break
+                    if flag:
+                        break
+                if flag:
+                    break
+
+        plain_text = decipher(text, best_key)
+    #    print(best_key, plain_text)
+    #    print(best_score)
+
+        best_score = quad_fitness.score(plain_text)
+        flag = True
+    #    stage = 0
+        while flag:
+            flag = False
+    #        stage += 1
+    #        print(stage)
+            key = [*best_key]
+            for l in range(1, key_len):
+                for p in range(key_len - l):
+                    for s in range(1, key_len - l - p + 1):
+                        #print (l, s, p)
+                        new_key = key[0:p] + key[p+l:]
+                        new_key = new_key[0:p+s] + key[p:p+l] + new_key[p+s:]
+                        plain_text = decipher(text, new_key)
+                        candidate_score = quad_fitness.score(plain_text)
+                        if candidate_score > best_score:
+                            best_score = candidate_score
+                            best_key = [*new_key]
+                            flag = True
+                            break
+                    if flag:
+                        break
+                if flag:
+                    break
+        if best_score > record_score:
+            record_score = best_score
+            record_key = [*best_key]
+
+    key = [*record_key]
+    key_len = len(record_key)
     rows = int(text_len / key_len)
     rem = text_len % key_len
-    sequence = list(range(key_len))
+    key = key[1:] + key[0:1]
+    plain_text = decipher(text, key)
+    candidate_score = quad_fitness.score(plain_text)
+    if candidate_score > record_score:
+        record_score = candidate_score
+        record_key = [*key]
 
-    # CHOOSE SCORING METHOD
-    # BI SCORES FASTER, TRI SCORES POTENTIALLY MORE ACCURATE
-    scores = bi_score(text)
-    #scores = tri_score(text)
+    if record_score > -9842:
+        passed += 1    
 
-    current_key = random.sample(sequence, key_len)
-    current_score = 0
-    for x in range(key_len-1):
-        i, j = current_key[x], current_key[x+1]
-        current_score += scores[(i, j)]
-    if current_score > best_score:
-        best_score = current_score
-        best_key = [*current_key]
-    flag = True
-#    stage = 0
-    while flag:
-        flag = False
-#        stage += 1
-#        print(stage)
-        key = [*best_key]
-        for l in range(1, key_len):
-            for p in range(0, key_len - l):
-                for s in range(1, key_len - l - p + 1):
-                    #print (l, s, p)
-                    new_key = key[0:p] + key[p+l:]
-                    new_key = new_key[0:p+s] + key[p:p+l] + new_key[p+s:]
-                    new_score = 0
-                    for x in range(key_len-1):
-                        i, j = new_key[x], new_key[x+1]
-                        new_score += scores[(i, j)]
-                    if new_score > best_score:
-                        best_score = new_score
-                        best_key = [*new_key]
-                        flag = True
-                        break
-                if flag:
-                    break
-            if flag:
-                break
+end = time.perf_counter()
+print(f'Passed - {passed}/{attempts} = {passed/attempts*100}%')
+time_taken = end - start
+print(f'Time taken - {time_taken:.2f}s = {time_taken/attempts:.2f}s')
 
-    plain_text = decipher(text, best_key)
-#    print(best_key, plain_text)
-#    print(best_score)
-
-    best_score = quad_fitness.score(plain_text)
-    flag = True
-#    stage = 0
-    while flag:
-        flag = False
-#        stage += 1
-#        print(stage)
-        key = [*best_key]
-        for l in range(1, key_len):
-            for p in range(0, key_len - l):
-                for s in range(1, key_len - l - p + 1):
-                    #print (l, s, p)
-                    new_key = key[0:p] + key[p+l:]
-                    new_key = new_key[0:p+s] + key[p:p+l] + new_key[p+s:]
-                    plain_text = decipher(text, new_key)
-                    candidate_score = quad_fitness.score(plain_text)
-                    if candidate_score > best_score:
-                        best_score = candidate_score
-                        best_key = [*new_key]
-                        flag = True
-                        break
-                if flag:
-                    break
-            if flag:
-                break
-    if best_score > record_score:
-        record_score = best_score
-        record_key = [*best_key]
-
-key = [*record_key]
-key_len = len(record_key)
-rows = int(text_len / key_len)
-rem = text_len % key_len
-key = key[1:] + key[0:1]
-plain_text = decipher(text, key)
-candidate_score = quad_fitness.score(plain_text)
-if candidate_score > record_score:
-    record_score = candidate_score
-    record_key = [*key]
-
-plain_text = decipher(text, record_key)
-print(record_key, plain_text)
-print(record_score)
-"""
-
-elapsed_time = timeit.timeit(code_to_test, number = 1)#/1000
-print(elapsed_time)
+# plain_text = decipher(text, record_key)
+# print(record_key, plain_text)
+# print(record_score)

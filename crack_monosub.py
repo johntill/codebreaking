@@ -82,25 +82,26 @@ indices = [alphabet.index(letter) for letter in low_letters]
 
 cipher_scores = ({'texts/Code_texts/subtest1.txt': -355,
                   'texts/Code_texts/subtest2.txt': -522,
-                  'texts/Code_texts/subtest3.txt': -1103,
-                  'texts/Code_texts/subtest4.txt': -1031,
+                  'texts/Code_texts/subtest3.txt': -1031,
+                  'texts/Code_texts/subtest4.txt': -1103,
                   'texts/Code_texts/subtest5.txt': -1787,
                   'texts/Code_texts/subtest6.txt': -2308,
                   'texts/Code_texts/subtest7.txt': -3282})
 
 target_score = cipher_scores[cipher_file]
 attempts = 1000
-for iterations in range(1000, 5500, 500):
+for iterations in range(1000, 3000, 500):
     success = 0
     help_count = 0
+    cutoff_during_while = iterations // 2
     count_list = []
     successful_counts = []
     no_improvement_list = []
     start = time.perf_counter()
     for _ in range(attempts):
-        #current_key = [*alphabet]
-        #random.shuffle(current_key)
-        current_key = set_key(frequencies, ev_list, alphabet)
+        current_key = [*alphabet]
+        random.shuffle(current_key)
+        #current_key = set_key(frequencies, ev_list, alphabet)
         plain_text = decrypt(cipher_text, current_key)
         current_score = score_text(plain_text, attributes)
         count = 0
@@ -108,9 +109,10 @@ for iterations in range(1000, 5500, 500):
         #for i in range(iterations):
         while no_improvement < iterations:
             count += 1
-            key = swap_letters(current_key, alphabet_sequence)
-            #key = swap_letters(current_key, weighted_ev_list)
-            # if i < iterations // 2:
+            #key = swap_letters(current_key, alphabet_sequence)
+            key = swap_letters(current_key, weighted_ev_list)
+            #if i < cutoff_during_while:
+            # if no_improvement < cutoff_during_while:
             #     key = swap_letters(current_key, weighted_ev_list)
             # else:
             #     key = swap_letters(current_key, alphabet_sequence)

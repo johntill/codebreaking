@@ -104,10 +104,10 @@ def align_score(key, key_len, num_long_col, offset):
 def segment_slide(fixed_key):
     for l in range(1, key_len):
         for p in range(key_len - l):
+            key = fixed_key[0:p] + fixed_key[p+l:]
+            segment = fixed_key[p:p+l]
             for s in range(1, key_len - l - p + 1):
-                key = fixed_key[0:p] + fixed_key[p+l:]
-                key = key[0:p+s] + fixed_key[p:p+l] + key[p+s:]
-                yield key
+                yield key[0:p+s] + segment + key[p+s:]
 
 def segment_swap(fixed_key):
     for l in range(1, int(key_len / 2) + 1):

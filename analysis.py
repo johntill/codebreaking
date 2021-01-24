@@ -7,7 +7,7 @@ from collections import defaultdict, Counter
 # Also offers to decrypt a Caesar cipher or test whether the cipher text
 # has a periodic IC which is the fingerprint of certain ciphers.
 
-cipher_file = 'texts/Code_texts/subtest4.txt'
+cipher_file = 'texts/Code_texts/subtest3.txt'
 ev_file = 'texts/Frequencies/english_monograms.txt'
 
 # bi, tri and quad_gram frequencies use different methods to create the

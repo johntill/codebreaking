@@ -1,36 +1,51 @@
 import time
-import random
-import cipher_tools as tools
 
-cipher_file = 'texts/Code_texts/subtest3.txt'
-ngram_file = 'texts/Frequencies/english_quadgrams.txt'
+def segment_slide(fixed_key):
+    for l in range(1, key_len):
+        for p in range(key_len - l):
+            for s in range(1, key_len - l - p + 1):
+                key = fixed_key[0:p] + fixed_key[p+l:]
+                key = key[0:p+s] + fixed_key[p:p+l] + key[p+s:]
+                yield key
 
+def segment_slide2(fixed_key):
+    for l in range(1, key_len):
+        for p in range(key_len - l):
+            key = fixed_key[0:p] + fixed_key[p+l:]
+            segment = fixed_key[p:p+l]
+            for s in range(1, key_len - l - p + 1):
+                yield key[0:p+s] + segment + key[p+s:]
 
-text = tools.import_cipher(cipher_file)
-#text = 'ROCKETWEAPONSARENOTNEWINWARMARETHECHINESEUSEDROCKETPROPELLEDARROWSOVERATHOUSANDBEARSAGO'
-text_len = len(text)
+def bi_score(key):
+    print(f'Using Bigrams: {key}')
 
-attributes = tools.create_ngram_attributes(ngram_file, text_len)
-score_text = tools.ngram_score_text
+def tri_score(key):
+    print(f'Using Trigrams: {key}')
+    
+    
 
-alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-def decrypt(cipher_text, key, alphabet):
-    key = ''.join(key)
-    table = str.maketrans(key, alphabet)
-    return cipher_text.translate(table)
-
-key = 'HRFSALDGJUMNBPQTIVWXYZKEOC'
-#key = 'HOFSALDGJUMNBPQTIVWXYZKERC'
-#key = 'HOFSABDGJUMNLPQTIVWXYZKERC'
+key = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+#key = 'ABCD'
+key_len = len(key)
 
 start = time.perf_counter()
+#print(key)
 
-plain_text = decrypt(text, key, alphabet)
-print(plain_text)
-score = score_text(plain_text, attributes)
-print(score)
+for _ in range(1):
+    count = 0
+    for new_key in segment_slide2(key):
+        #print(new_key)
+        count += 1
 
+#score_using = 'bigrams'
+score_using = 'trigrams'
+
+ev_file = 'texts/Frequencies/english_' + score_using + '.txt'
+scoring_function = bi_score if score_using == 'bigrams' else tri_score
+scoring_function(key)
+print(ev_file)
+
+print(count)
 
 end = time.perf_counter()
 print(f'{end-start}s')

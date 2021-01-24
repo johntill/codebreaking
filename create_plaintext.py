@@ -7,10 +7,10 @@ score_text = tools.ngram_score_text
 input_path = 'texts/plain_texts/'
 output_path = 'texts/code_texts/'
 
-input_files = ['plainvshort1.txt', 'plain1.txt', 'plain2.txt']
+input_files = ['subtest4.txt']
 
 output_files_prefix = 'subtest'
-output_files_start_at_number = 5
+output_files_start_at_number = 4
 
 alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
@@ -33,15 +33,15 @@ for index, file in enumerate(input_files):
     score = score_text(text, attributes)
     print(input_file, text_len, score, output_file)
 
-    key = [*alphabet]
-    random.shuffle(key)
-    print(key)
-    cipher = encrypt(text, key)
+    # key = [*alphabet]
+    # random.shuffle(key)
+    # print(key)
+    # cipher = encrypt(text, key)
     #print(text)
-    print(cipher)
-    print()
+    # print(cipher)
+    # print()
 
     # Write text to output_file
     # with open(output_file, 'w') as f:
-    #     f.write(cipher)
+    #     f.write(text)
 

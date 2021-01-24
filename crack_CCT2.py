@@ -1,6 +1,3 @@
-import timeit
-
-code_to_test = """
 # Checks all key lengths from 2-15 for CCT
 # CCT = Complete Columnar Transposition
 # i.e. all columns are the same length
@@ -10,6 +7,7 @@ code_to_test = """
 import re
 import itertools
 import random
+import time
 import cipher_tools as tools
 
 cipher_file = 'texts/Code_texts/ctkey12cipherICT.txt'
@@ -102,66 +100,76 @@ for key in iter:
 
 scoring_function, ngrams, ngram_floor = set_scoring_method(score_using)
 
-# Set range of key lengths to be checked
-# Minimum length cannot be < 3
-for key_len in range(3, 16):
+attempts = 1
+passed = 0
+
+start = time.perf_counter()
+for _ in range(attempts):
+    # Set range of key lengths to be checked
+    # Minimum length cannot be < 3
+    for key_len in range(3, 16):
+        full_rows, num_long_col = divmod(text_len, key_len)
+        scores = scoring_function(text, ngrams, ngram_floor)
+
+        best_key = list(range(key_len))
+        random.shuffle(best_key)
+        best_score = 0
+        for x in range(key_len-1):
+            i, j = best_key[x], best_key[x+1]
+            best_score += scores[(i, j)]
+
+        flag = True
+        while flag:
+            flag = False
+            for new_key in segment_slide(best_key):
+                new_score = 0
+                for x in range(key_len-1):
+                    i, j = new_key[x], new_key[x+1]
+                    new_score += scores[(i, j)]
+                if new_score > best_score:
+                    best_score = new_score
+                    best_key = [*new_key]
+                    flag = True
+                    break
+        
+        #print(key_len, best_score)
+        plain_text = decipher(text, best_key)
+        best_score = score_text(plain_text, attributes)
+
+        flag = True
+        while flag:
+            flag = False
+            for new_key in segment_slide(best_key):
+                plain_text = decipher(text, new_key)
+                candidate_score = score_text(plain_text, attributes)
+                if candidate_score > best_score:
+                    best_score = candidate_score
+                    best_key = [*new_key]
+                    flag = True
+                    break
+
+        if best_score > record_score:
+            record_score = best_score
+            record_key = [*best_key]
+
+    key = [*record_key]
+    key_len = len(record_key)
     full_rows, num_long_col = divmod(text_len, key_len)
-    scores = scoring_function(text, ngrams, ngram_floor)
+    key = key[1:] + key[0:1]
+    plain_text = decipher(text, key)
+    candidate_score = score_text(plain_text, attributes)
+    if candidate_score > record_score:
+        record_score = candidate_score
+        record_key = [*key]
+    
+    if record_score > -9842:
+        passed += 1
 
-    best_key = list(range(key_len))
-    random.shuffle(best_key)
-    best_score = 0
-    for x in range(key_len-1):
-        i, j = best_key[x], best_key[x+1]
-        best_score += scores[(i, j)]
+end = time.perf_counter()
+print(f'Passed - {passed}/{attempts} = {passed/attempts*100}%')
+time_taken = end - start
+print(f'Time taken - {time_taken:.2f}s = {time_taken/attempts:.2f}s')
 
-    flag = True
-    while flag:
-        flag = False
-        for new_key in segment_slide(best_key):
-            new_score = 0
-            for x in range(key_len-1):
-                i, j = new_key[x], new_key[x+1]
-                new_score += scores[(i, j)]
-            if new_score > best_score:
-                best_score = new_score
-                best_key = [*new_key]
-                flag = True
-                break
-
-    plain_text = decipher(text, best_key)
-    best_score = score_text(plain_text, attributes)
-
-    flag = True
-    while flag:
-        flag = False
-        for new_key in segment_slide(best_key):
-            plain_text = decipher(text, new_key)
-            candidate_score = score_text(plain_text, attributes)
-            if candidate_score > best_score:
-                best_score = candidate_score
-                best_key = [*new_key]
-                flag = True
-                break
-
-    if best_score > record_score:
-        record_score = best_score
-        record_key = [*best_key]
-
-key = [*record_key]
-key_len = len(record_key)
-full_rows, num_long_col = divmod(text_len, key_len)
-key = key[1:] + key[0:1]
-plain_text = decipher(text, key)
-candidate_score = score_text(plain_text, attributes)
-if candidate_score > record_score:
-    record_score = candidate_score
-    record_key = [*key]
-
-plain_text = decipher(text, record_key)
-print(record_key, plain_text)
-print(record_score)
-"""
-
-elapsed_time = timeit.timeit(code_to_test, number = 1)#/1000
-print(elapsed_time)
+# plain_text = decipher(text, record_key)
+# print(record_key, plain_text)
+# print(record_score)

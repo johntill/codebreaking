@@ -4,9 +4,9 @@
 # change which key lengths are checked at line 107
 # choose Bigram or Trigram scoring at lines 21 & 22
 
-import re
 import itertools
 import random
+import re
 import time
 import cipher_tools as tools
 
@@ -37,18 +37,17 @@ def decipher(text, key):
     return ''.join(plain)
 
 def set_scoring_method(score_using):
-    ev_file = 'texts/Frequencies/english_' + score_using + '.txt'
+    scoring_function, ev_file = scoring_functions[score_using]
     ngrams, _, ngram_floor, _  = tools.create_ngram_attributes(ev_file, 1)
-    scoring_function = bi_score if score_using == 'bigrams' else tri_score
     return scoring_function, ngrams, ngram_floor
 
-def bi_score(text, ngrams, ngram_floor):
+def score_bigrams(text, ngrams, ngram_floor):
     scores = {}
     iter_bi = itertools.permutations(range(key_len), 2)
     for i, j in iter_bi:
-        score = 0
         column_i = text[i*full_rows:i*full_rows+full_rows]
         column_j = text[j*full_rows:j*full_rows+full_rows]
+        score = 0
         for char_a, char_b in zip(column_i, column_j):
             try:
                 score += ngrams[char_a + char_b]
@@ -57,14 +56,14 @@ def bi_score(text, ngrams, ngram_floor):
         scores[(i, j)] = score
     return scores
 
-def tri_score(text, ngrams, ngram_floor):
+def score_trigrams(text, ngrams, ngram_floor):
     scores = {}
     iter_tri = itertools.permutations(range(key_len), 3)
     for i, j, k in iter_tri:
-        score = 0
         column_i = text[i*full_rows:i*full_rows+full_rows]
         column_j = text[j*full_rows:j*full_rows+full_rows]
         column_k = text[k*full_rows:k*full_rows+full_rows]
+        score = 0
         for char_a, char_b, char_c in zip(column_i, column_j, column_k):
             try:
                 score += ngrams[char_a + char_b + char_c]
@@ -85,26 +84,32 @@ def segment_slide(fixed_key):
             for s in range(1, key_len - l - p + 1):
                 yield key[0:p+s] + segment + key[p+s:]
 
-record_score = -10_000_000
 
-# checks key length 2
-iter = itertools.permutations(range(2), 2)
-key_len = 2
-full_rows, num_long_col = divmod(text_len, key_len)
-for key in iter:
-    plain_text = decipher(text, key)
-    candidate_score = score_text(plain_text, attributes)
-    if candidate_score > record_score:
-        record_score = candidate_score
-        record_key = [*key]
-
-scoring_function, ngrams, ngram_floor = set_scoring_method(score_using)
+scoring_functions = {
+    'bigrams': (score_bigrams, 'texts/Frequencies/english_bigrams.txt'),
+    'trigrams': (score_trigrams, 'texts/Frequencies/english_trigrams.txt')
+}
 
 attempts = 1
 passed = 0
 
 start = time.perf_counter()
 for _ in range(attempts):
+    record_score = -10_000_000
+
+    # checks key length 2
+    iter = itertools.permutations(range(2), 2)
+    key_len = 2
+    full_rows, num_long_col = divmod(text_len, key_len)
+    for key in iter:
+        plain_text = decipher(text, key)
+        candidate_score = score_text(plain_text, attributes)
+        if candidate_score > record_score:
+            record_score = candidate_score
+            record_key = [*key]
+
+    scoring_function, ngrams, ngram_floor = set_scoring_method(score_using)
+
     # Set range of key lengths to be checked
     # Minimum length cannot be < 3
     for key_len in range(3, 16):
@@ -132,7 +137,6 @@ for _ in range(attempts):
                     flag = True
                     break
         
-        #print(key_len, best_score)
         plain_text = decipher(text, best_key)
         best_score = score_text(plain_text, attributes)
 
@@ -165,11 +169,11 @@ for _ in range(attempts):
     if record_score > -9842:
         passed += 1
 
+# plain_text = decipher(text, record_key)
+# print(record_key, plain_text)
+# print(record_score)
+
 end = time.perf_counter()
 print(f'Passed - {passed}/{attempts} = {passed/attempts*100}%')
 time_taken = end - start
 print(f'Time taken - {time_taken:.2f}s = {time_taken/attempts:.2f}s')
-
-# plain_text = decipher(text, record_key)
-# print(record_key, plain_text)
-# print(record_score)

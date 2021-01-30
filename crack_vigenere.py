@@ -1,10 +1,10 @@
-import timeit
-
-code_to_test = """
-
+from time import perf_counter
+import string
 import cipher_tools as tools
 
-cipher_file = 'texts/Code_texts/vigtest1.txt'
+start = perf_counter()
+
+cipher_file = 'texts/Code_texts/vigtest2.txt'
 ngram_file = 'texts/Frequencies/english_quadgrams.txt'
 
 text = tools.import_cipher(cipher_file)
@@ -16,10 +16,8 @@ ngram_score_text = tools.ngram_score_text
 frequency_analysis = tools.frequency_analysis
 calculate_IC = tools.calculate_IC
 
-alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-letters = {'A':0,'B':1,'C':2,'D':3,'E':4,'F':5,'G':6,'H':7,'I':8,'J':9,'K':10,
-           'L':11,'M':12,'N':13,'O':14,'P':15,'Q':16,'R':17,'S':18,'T':19,'U':20,
-           'V':21,'W':22,'X':23,'Y':24,'Z':25}
+alphabet = string.ascii_uppercase
+letters = {ch: index for index, ch in enumerate(alphabet)}
 
 # Cycles though all keyword lengths of 2-30 and calculates Index of Coincidence.
 # Increase range if you think key word is > 15 characters, the greater the
@@ -36,6 +34,9 @@ for possible_key_len in range(2, 31):
     if (IC / possible_key_len) > 0.06:
         key_len = possible_key_len
         break
+else:
+    print('No viable keylength found.')
+    quit()
 
 def decipher(text, key):
     trans_text = [None] * text_len
@@ -63,9 +64,10 @@ for _ in range(2):
 
 keyword = ''.join(keyword)
 plain_text = decipher(text, keyword)
-print(f"Key = {keyword}")
-print(plain_text.lower())
-"""
 
-elapsed_time = timeit.timeit(code_to_test, number = 1)#/1000
-print(elapsed_time)
+end = perf_counter()
+
+print(f'Key = {keyword} - {key_len}')
+print(plain_text.lower())
+
+print(f'{end-start}s')

@@ -1,12 +1,9 @@
-import timeit
-
-code_to_test = """
 # code to brute force Playfair cipher using simulated annealing
 
 import itertools
 import math
 import random
-import time
+from time import perf_counter
 import code_playfair as playfair
 import cipher_tools as tools
 
@@ -138,7 +135,7 @@ for T in range(27, 28, 1):
     results = []
     successes = 0
     for number in range(1, 3):
-        start = time.perf_counter()
+        start = perf_counter()
         #print(f'Number: {number:02}')
         stages = blank_stages = 0
         # creates random initial key from alphabet
@@ -207,7 +204,7 @@ for T in range(27, 28, 1):
             blank_stages += 1
                 
         solutions[number] = best_key
-        end = time.perf_counter()
+        end = perf_counter()
         time_taken = end - start
         results.append((number, best_stage, best_score, time_taken))
         if best_score > -3517:
@@ -227,7 +224,5 @@ for T in range(27, 28, 1):
         print(f'{number:02} = Best Stage: {best_stage:02} - Best Score: {best_score:.4f} - {time_taken:.2f}s')
     print(f'Total time = {total_time:.2f}s or {total_time/number:.2f}s per attempt')
     print()
-"""
 
-elapsed_time = timeit.timeit(code_to_test, number = 1)#/1000
-print(elapsed_time)
+

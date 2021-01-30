@@ -1,9 +1,7 @@
-import timeit
-
-code_to_test = """
-import re
-
+from time import perf_counter
 import cipher_tools as ct
+
+start = perf_counter()
 
 ngram_file = 'texts/Frequencies/english_quadgrams.txt'
 filename = 'texts/Code_texts/enigma_medium2.txt'
@@ -38,7 +36,7 @@ for _ in range(20000):
     #scores = fitness_score(text)
 
 #print(scores)
-"""
 
-elapsed_time = timeit.timeit(code_to_test, number = 1)#/1000
-print(elapsed_time)
+end = perf_counter()
+time_taken = end - start
+print(f'Time taken - {time_taken:.2f}s')

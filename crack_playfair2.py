@@ -1,6 +1,3 @@
-import timeit
-
-code_to_test = """
 # code to brute force Playfair cipher using simulated annealing
 
 import itertools
@@ -8,6 +5,9 @@ import math
 import random
 import code_playfair as playfair
 import cipher_tools as tools
+from time import perf_counter
+
+start = perf_counter()
 
 cipher_file = 'texts/Code_texts/TCB Stage6.txt'
 ngram_file = 'texts/Frequencies/english_quintgrams.txt'
@@ -166,7 +166,6 @@ for number in range(1, 4):
 for (number, best_stage, best_score) in results:
     print(f"{number:02} = Best Stage: {best_stage:02} - Best Score: {best_score}")
 
-"""
-
-elapsed_time = timeit.timeit(code_to_test, number = 1)#/1000
-print(elapsed_time)
+end = perf_counter()
+time_taken = end - start
+print(f'Time taken - {time_taken:.2f}s')

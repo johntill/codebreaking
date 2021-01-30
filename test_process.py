@@ -1,8 +1,7 @@
-import timeit
-
-code_to_test = """
-import re
 from math import log10
+from time import perf_counter
+
+start = perf_counter()
 
 ngram_file = 'texts/Frequencies/english_quintgrams.txt'
 
@@ -18,7 +17,7 @@ for ngram, count in ngrams.items():
     ngrams[ngram] = log10(count / count_total)
 
 #print(ngrams)
-"""
 
-elapsed_time = timeit.timeit(code_to_test, number = 1)#/1000
-print(elapsed_time)
+end = perf_counter()
+time_taken = end - start
+print(f'Time taken - {time_taken:.2f}s')

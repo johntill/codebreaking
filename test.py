@@ -1,5 +1,4 @@
 import itertools
-import random
 
 # swap any 2 elements
 # swap any 2 columns

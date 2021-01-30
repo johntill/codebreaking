@@ -1,7 +1,6 @@
-import re
 import random
-import time
 import cipher_tools as tools
+from time import perf_counter
 
 cipher_file = 'texts/Code_texts/subtest4.txt'
 ev_file = 'texts/Frequencies/english_monograms.txt'
@@ -58,7 +57,7 @@ target_score = -1103
 
 best_score = -10_000_000
 success = 0
-start = time.perf_counter()
+start = perf_counter()
 for _ in range(attempts):
     current_key = set_key(frequencies, ev_list, alphabet)
     plain_text = decrypt(cipher_text, current_key)
@@ -76,7 +75,7 @@ for _ in range(attempts):
     if current_score > target_score:
         success += 1
 
-end = time.perf_counter()
+end = perf_counter()
 
 best_key = ''.join(best_key)
 print(f'Best key - {best_key}')

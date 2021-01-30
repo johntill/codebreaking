@@ -1,4 +1,4 @@
-import time
+from time import perf_counter
 import cipher_tools as tools
 
 cipher_file = 'texts/Code_texts/subtest2.txt'
@@ -12,7 +12,7 @@ key_len = len(alphabet)
 #print(key_len)
 letters = {ch: index for index, ch in enumerate(alphabet)}
 
-start = time.perf_counter()
+start = perf_counter()
 
 
 for _ in range(1):
@@ -38,5 +38,5 @@ for _ in range(1):
 
 
 #print(char_positions)
-end = time.perf_counter()
+end = perf_counter()
 print(f'{end-start}s')

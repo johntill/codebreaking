@@ -1,5 +1,3 @@
-import string
-
 class Vigenere:
 
     def __init__(self, key):

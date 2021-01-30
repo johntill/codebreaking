@@ -1,12 +1,12 @@
-# import timeit
-
-# code_to_test = """
 # Loads results of crack_enigma2.py from csv file then performs second
 # half of decryption process to find correct plain text.
 
 import re
 from collections import defaultdict, Counter
 from csv import reader
+from time import perf_counter
+
+start = perf_counter()
 
 # Sets name of cipher text and results file to load.
 cipher_file = 'texts/Code_texts/enigma_FHPQX.txt'
@@ -253,7 +253,6 @@ print(len(results))
 
 # print(count, IC, rotors, init_settings, ringstellung, steckers)
 # print(plain)
-# """
-
-# elapsed_time = timeit.timeit(code_to_test, number = 1)#/1000
-# print(elapsed_time)
+end = perf_counter()
+time_taken = end - start
+print(f'Time taken - {time_taken:.2f}s')

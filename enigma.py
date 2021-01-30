@@ -1,6 +1,3 @@
-import timeit
-
-code_to_test = """
 import re
 from collections import Counter
 
@@ -128,7 +125,3 @@ print(plain)
 # with open('enigmacipher2.txt', 'w') as f:
 #     f.write(plain)
 
-"""
-
-elapsed_time = timeit.timeit(code_to_test, number = 1)#/1000
-print(elapsed_time)

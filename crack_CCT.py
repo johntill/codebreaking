@@ -12,7 +12,7 @@ import ngram_score as ns
 
 quad_fitness = ns.NgramScore('texts/Frequencies/english_quadgrams.txt')
 
-with open('texts/Code_texts/ctkey12cipherICT.txt') as f:
+with open('texts/Code_texts/ctkey15shortCCT.txt') as f:
     text = f.read()
 text = re.sub('[^A-Z]','', text.upper())
 text_len = len(text)
@@ -23,10 +23,7 @@ def decipher(text, key):
     x = 0
     for char in ord_key:
         i = key.index(char)
-        if i < rem:
-            new_col = rows + 1
-        else:
-            new_col = rows
+        new_col = rows + 1 if i < rem else rows
         plain[i::key_len] = text[x:x + new_col]
         x += new_col
     return ''.join(plain)
@@ -38,9 +35,7 @@ def bi_score(text):
     for i, j in iter_bi:
         column_i = text[i*rows:i*rows+rows]
         column_j = text[j*rows:j*rows+rows]
-        total_score = 0
-        for a, b in zip(column_i, column_j):
-            total_score += bi_fitness.score(a + b)
+        total_score = sum(bi_fitness.score(a + b) for a, b in zip(column_i, column_j))
         scores[(i, j)] = total_score
     return scores
 
@@ -52,9 +47,10 @@ def tri_score(text):
         column_i = text[i*rows:(i*rows+rows)]
         column_j = text[j*rows:(j*rows+rows)]
         column_k = text[k*rows:(k*rows+rows)]
-        total_score = 0
-        for a, b, c in zip(column_i, column_j, column_k):
-            total_score += tri_fitness.score(a + b + c)
+        total_score = sum(
+            tri_fitness.score(a + b + c)
+            for a, b, c in zip(column_i, column_j, column_k)
+        )
         if (i, j) in scores:
             if total_score > scores[(i, j)]:
                 scores[(i, j)] = total_score
@@ -85,7 +81,7 @@ for _ in range(attempts):
     # Set range of key lengths to be checked
     # Minimum length cannot be < 3
     for key_len in range(3, 16):
-        best_score = -10_000_000
+        best_bigram_score = best_score = -10_000_000
         rows = int(text_len / key_len)
         rem = text_len % key_len
         sequence = list(range(key_len))
@@ -101,8 +97,8 @@ for _ in range(attempts):
         for x in range(key_len-1):
             i, j = current_key[x], current_key[x+1]
             current_score += scores[(i, j)]
-        if current_score > best_score:
-            best_score = current_score
+        if current_score > best_bigram_score:
+            best_bigram_score = current_score
             best_key = [*current_key]
 
         flag = True
@@ -118,7 +114,7 @@ for _ in range(attempts):
                         for x in range(key_len-1):
                             i, j = new_key[x], new_key[x+1]
                             new_score += scores[(i, j)]
-                        if new_score > best_score:
+                        if new_score > best_bigram_score:
                             best_score = new_score
                             best_key = [*new_key]
                             flag = True
@@ -127,7 +123,8 @@ for _ in range(attempts):
                         break
                 if flag:
                     break
-
+        
+        print(key_len, best_score)
         plain_text = decipher(text, best_key)
         best_score = quad_fitness.score(plain_text)
 
@@ -167,12 +164,12 @@ for _ in range(attempts):
         record_score = candidate_score
         record_key = [*key]
 
-    if record_score > -9842:
+    if record_score > -575:
         passed += 1    
 
-# plain_text = decipher(text, record_key)
-# print(record_key, plain_text)
-# print(record_score)
+plain_text = decipher(text, record_key)
+print(record_key, plain_text)
+print(record_score)
 
 end = time.perf_counter()
 print(f'Passed - {passed}/{attempts} = {passed/attempts*100}%')

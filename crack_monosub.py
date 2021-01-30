@@ -1,12 +1,8 @@
-# import timeit
-
-# code_to_test = """
 import itertools
-import re
 import random
-import time
 import cipher_tools as tools
 from collections import Counter
+from time import perf_counter
 
 cipher_file = 'texts/Code_texts/subtest4.txt'
 ev_file = 'texts/Frequencies/english_monograms.txt'
@@ -97,7 +93,7 @@ for iterations in range(1000, 3000, 500):
     count_list = []
     successful_counts = []
     no_improvement_list = []
-    start = time.perf_counter()
+    start = perf_counter()
     for _ in range(attempts):
         current_key = [*alphabet]
         random.shuffle(current_key)
@@ -155,7 +151,7 @@ for iterations in range(1000, 3000, 500):
             #print(plain_text)
             #print(current_score)
 
-    end = time.perf_counter()
+    end = perf_counter()
 
     # best_key = ''.join(best_key)
     # print(f'Best key - {best_key}')
@@ -183,7 +179,3 @@ for iterations in range(1000, 3000, 500):
     time_taken = end - start
     print(f'{time_taken:.2f}s - {time_taken/attempts:.2f}s')
     print()
-# """
-
-# elapsed_time = timeit.timeit(code_to_test, number = 1)#/1
-# print(elapsed_time)

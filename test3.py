@@ -1,14 +1,17 @@
-import timeit
-
-code_to_test = """
 import string
 import re
+from time import perf_counter
 
-cipher_file = 'texts/Plain_texts/plain5.txt'
+#filename = 'texts/Plain_texts/warandpeace.txt'
+filename = 'texts/Plain_texts/plain5.txt'
 
-with open(cipher_file) as f:
+
+with open(filename, 'r', encoding='utf8', errors='ignore') as f:
     text = f.read()
+# Removes punctuation & whitespace, converts to all UPPERCASE
 text = re.sub('[^A-Z]','', text.upper())
+
+
 
 # letters = {'A':0,'B':1,'C':2,'D':3,'E':4,'F':5,'G':6,'H':7,
 #        'I':8,'J':9,'K':10,'L':11,'M':12,'N':13,'O':14,'P':15,'Q':16,
@@ -17,19 +20,26 @@ text = re.sub('[^A-Z]','', text.upper())
 # arr = ('A','B','C','D','E','F','G','H','I','J','K','L','M','N','O',
 #        'P','Q','R','S','T','U','V','W','X','Y','Z')
 
-arr = tuple(string.ascii_uppercase)
+#arr = tuple(string.ascii_uppercase)
+arr = string.ascii_uppercase
+
 letters = {ch: index for index, ch in enumerate(arr)}
 
-text = [letters[i] for i in text]
+new_text = [letters[i] for i in text]
 
+start = perf_counter()
 for _ in range(1):
-    plain = [arr[ch] for ch in text]
+    plain = [arr[ch] for ch in new_text]
 
-plain = ''.join(plain)
+
+
+
+
+end = perf_counter()
+#plain = ''.join(plain)
 
 #print(plain)
 
-"""
 
-elapsed_time = timeit.timeit(code_to_test, number = 1)#/1000
-print(elapsed_time)
+time_taken = end - start
+print(f'Time taken - {time_taken}s')

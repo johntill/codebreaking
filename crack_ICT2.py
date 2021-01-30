@@ -4,11 +4,11 @@
 import random
 import itertools
 import cipher_tools as tools
-import time
+from time import perf_counter
 
-key_len = 12
+key_len = 25
 
-cipher_file = 'texts/Code_texts/ctkey12cipherICT.txt'
+cipher_file = 'texts/Code_texts/ctkey25cipherICT.txt'
 ev_file = 'texts/Frequencies/english_bigrams.txt'
 ngram_file = 'texts/Frequencies/english_quadgrams.txt'
 
@@ -119,7 +119,7 @@ def segment_swap(fixed_key):
 
 attempts = 1
 for threshold in range(0, 1, 1):
-    start = time.perf_counter()
+    start = perf_counter()
     passed = 0
     for _ in range(attempts):
         bigrams, _, floor, _ = tools.create_ngram_attributes(ev_file, 1)
@@ -196,16 +196,13 @@ for threshold in range(0, 1, 1):
            best_score, best_key = candidate_score, [*key]
            best_key = [*key]
 
-        # plain_text = decipher(text, best_key)
-        # print(best_key)
-        # print(plain_text)
-        # print(best_score)
+        plain_text = decipher(text, best_key, text_len, full_rows, num_long_col)
+        print(best_key)
+        print(plain_text)
+        print(best_score)
         if best_score > -9842:
             passed += 1
 
-    end = time.perf_counter()
+    end = perf_counter()
     print(f'{threshold} - Passed {passed}/{attempts} = {passed/attempts*100}% - {end-start}s')
-# """
 
-# elapsed_time = timeit.timeit(code_to_test, number = 1)#/1000
-# print(elapsed_time)

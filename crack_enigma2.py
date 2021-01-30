@@ -1,6 +1,3 @@
-import timeit
-
-code_to_test = """
 # Program to perform first half of decryption of Enigma cipher text.
 # This half iterates through all 26 x 26 x 26 x 60 rotor combinations
 # and saves the results to a csv file in descending IC (Index of
@@ -9,6 +6,9 @@ code_to_test = """
 import re
 import itertools
 from collections import Counter
+from time import perf_counter
+
+start = perf_counter()
 
 # Name of file containing cipher.
 cipher_file = 'texts/Code_texts/enigma_FHPQX.txt'
@@ -128,7 +128,6 @@ def save_results(results_file, results):
 # Optional line to save results list to csv file
 save_results(results_file, results)
 
-"""
-
-elapsed_time = timeit.timeit(code_to_test, number = 1)#/1000
-print(elapsed_time)
+end = perf_counter()
+time_taken = end - start
+print(f'Time taken - {time_taken:.2f}s')

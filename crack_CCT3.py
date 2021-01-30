@@ -6,8 +6,7 @@
 
 import itertools
 import random
-import re
-import time
+from time import perf_counter
 import cipher_tools as tools
 
 cipher_file = 'texts/Code_texts/ctkey15shortCCT.txt'
@@ -89,9 +88,10 @@ scoring_functions = {
 attempts = 1
 passed = 0
 
-start = time.perf_counter()
+start = perf_counter()
 for _ in range(attempts):
     record_score = -10_000_000
+    previous_round = 0
 
     # checks key length 2
     iter = itertools.permutations(range(2), 2)
@@ -108,12 +108,12 @@ for _ in range(attempts):
 
     # Set range of key lengths to be checked
     # Minimum length cannot be < 3
-    for key_len in range(2, 16):
+    for key_len in range(3, 16):
         full_rows, num_long_col = divmod(text_len, key_len)
         scores = scoring_function(text, ngrams, ngram_floor)
 
         best_key = list(range(key_len))
-        #random.shuffle(best_key)
+        random.shuffle(best_key)
         best_score = 0
         for x in range(key_len-1):
             i, j = best_key[x], best_key[x+1]
@@ -132,8 +132,14 @@ for _ in range(attempts):
                     best_key = [*new_key]
                     flag = True
                     break
+
+        print(key_len, best_score, previous_round)
+        # if best_score < previous_round:
+        #     previous_round = best_score
+        #     continue
+
         
-        print(key_len, best_score)
+
         plain_text = decipher(text, best_key)
         best_score = score_text(plain_text, attributes)
 
@@ -170,7 +176,7 @@ plain_text = decipher(text, record_key)
 print(record_key, plain_text)
 print(record_score)
 
-end = time.perf_counter()
+end = perf_counter()
 print(f'Passed - {passed}/{attempts} = {passed/attempts*100}%')
 time_taken = end - start
 print(f'Time taken - {time_taken:.2f}s = {time_taken/attempts:.2f}s')

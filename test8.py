@@ -1,34 +1,77 @@
-import time
-import cipher_tools as tools
+from time import perf_counter
+import numpy as np
 
-cipher_file = 'texts/Code_texts/subtest2.txt'
+ngram_file = 'texts/Frequencies/english_quadgrams.txt'
 
-#text = tools.import_cipher(cipher_file)
-text = 'HELLOWORLD'
-text_len = len(text)
+def gen_dict1(ngram_file):
+    ngrams = {}
+    with open(ngram_file, 'r', encoding='utf8', errors='ignore') as f:
+        for line in f:
+            key, _, count = line.partition(' ')
+            ngrams[key] = int(count)
 
-alphabet = tuple('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
-key_len = len(alphabet)
-#print(key_len)
-letters = {ch: index for index, ch in enumerate(alphabet)}
+    names = np.array([[ord(c)-65 for c in key] for key in ngrams])
+    vals = np.array(list(ngrams.values()), dtype=np.int64)
 
-iterator = (letters[char] for char in text)
+    L = len(key)
+    N = vals.sum()
+    vals = np.log10(vals / N)
+    #floor = np.log10(0.01 / N)
+    #vals = np.append(vals, floor)
+    length = vals.size
+    return names, vals, L, length
 
-start = time.perf_counter()
+def gen_dict2(ngram_file):
+    names = []
+    vals = []
+    with open(ngram_file, 'r', encoding='utf8', errors='ignore') as f:
+        for line in f:
+            key, _, count = line.partition(' ')
+            names.append([ord(c)-65 for c in key])
+            vals.append(int(count))
+
+    names = np.array(names)
+    vals = np.array(vals, dtype=np.float64)
+
+    L = len(key)
+    N = vals.sum()
+    vals = np.log10(vals / N)
+    floor = np.log10(0.01 / N)
+    vals = np.append(vals, floor)
+    length = vals.size - 1
+    return names, vals, L, length
+
+def gen_dict3(ngram_file):
+    ngrams = {}
+    with open(ngram_file, 'r', encoding='utf8', errors='ignore') as f:
+        for line in f:
+            key, _, count = line.partition(' ')
+            ngrams[key] = int(count)
+
+    names = np.array([[ord(c)-65 for c in key] for key in ngrams])
+    vals = np.array(list(ngrams.values()), dtype=np.int64)
+
+    L = len(key)
+    N = vals.sum()
+    vals = np.log10(vals / N)
+    floor = np.log10(0.01 / N)
+    vals = np.append(vals, floor)
+    length = vals.size - 1
+    return names, vals, L, length
+
+
+start = perf_counter()
 for _ in range(1):
-    quadgram_val = iterator.__next__()
-    print(quadgram_val)
-    quadgram_val = (quadgram_val << 5) + iterator.__next__()
-    print(quadgram_val)
-    quadgram_val = (quadgram_val << 5) + iterator.__next__()
-    print(quadgram_val)
-    quadgrams = [0 for cntr in range(32 * 32 * 32 * 32)]
-    print(quadgrams)
+    names, vals, L, length = gen_dict1(ngram_file)
+    #names, vals, L, length = gen_dict2(ngram_file)
+    #names, vals, L, length = gen_dict3(ngram_file)
+
+end = perf_counter()
+
+# print(names)
+# print(names.dtype)
+# print(vals)
+# print(vals.dtype)
 
 
-#print(a)
-#print(b)
-#print(c)
-#print(d)
-end = time.perf_counter()
 print(f'{end-start}s')

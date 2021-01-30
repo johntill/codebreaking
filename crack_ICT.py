@@ -1,11 +1,7 @@
-import timeit
-
-code_to_test = """
-import random
 import itertools
+import random
+from time import perf_counter
 import cipher_tools as tools
-import ngram_score as ns
-from math import log10
 
 cipher_file = 'texts/Code_texts/ctkey12cipherICT.txt'
 ev_file = 'texts/Frequencies/english_bigrams.txt'
@@ -14,18 +10,6 @@ ngram_file = 'texts/Frequencies/english_quadgrams.txt'
 text = tools.import_cipher(cipher_file)
 
 key_len = 12
-
-# bigrams = ns.NgramScore(ev_file)
-
-# bigrams = {}
-# for line in open(ev_file):
-#     k, count = line.split(' ')
-#     bigrams[k] = float(count)
-# L = len(k)
-# N = sum(bigrams.values())
-# for k in bigrams.keys():
-#     bigrams[k] = log10(bigrams[k]/N)
-# floor = log10(0.01/N)
 
 def decipher(text, key):
     ord_key = set(key)
@@ -120,18 +104,9 @@ def align_score(key):
 
 attempts = 10
 passed = 0
-for _ in range(attempts):
-    # bigrams = ns.NgramScore(ev_file)
 
-    # bigrams = {}
-    # for line in open(ev_file):
-    #     k, count = line.split(' ')
-    #     bigrams[k] = float(count)
-    # L = len(k)
-    # N = sum(bigrams.values())
-    # for k in bigrams.keys():
-    #     bigrams[k] = log10(bigrams[k]/N)
-    # floor = log10(0.01/N)
+start = perf_counter()
+for _ in range(attempts):
     bigrams, _, floor, _ = tools.create_ngram_attributes(ev_file, 1)
     text_len = len(text)
     full_rows = int(text_len / key_len)
@@ -229,9 +204,6 @@ for _ in range(attempts):
     score_text = tools.ngram_score_text
     best_score = score_text(plain_text, attributes)
 
-    # quad_fitness = ns.NgramScore(ngram_file)
-    # best_score = quad_fitness.score(plain_text)
-
     flag = True
     while flag:
         flag = False
@@ -243,7 +215,6 @@ for _ in range(attempts):
                     new_key = new_key[0:p+s] + key[p:p+l] + new_key[p+s:]
                     plain_text = decipher(text, new_key)
                     candidate_score = score_text(plain_text, attributes)
-                    # candidate_score = quad_fitness.score(plain_text)
                     if candidate_score > best_score:
                         best_score, best_key = candidate_score, [*new_key]
                         flag = True
@@ -261,7 +232,6 @@ for _ in range(attempts):
                                                         new_key[p1:p1+l])
                     plain_text = decipher(text, new_key)
                     candidate_score = score_text(plain_text, attributes)
-                    # candidate_score = quad_fitness.score(plain_text)
                     if candidate_score > best_score:
                         best_score, best_key = candidate_score, [*new_key]
                         flag = True
@@ -286,8 +256,7 @@ for _ in range(attempts):
     if best_score > -9842:
         passed += 1
 
+end = perf_counter()
 print(f'Passed {passed}/{attempts} = {passed/attempts*100}')
-"""
-
-elapsed_time = timeit.timeit(code_to_test, number = 1)#/1000
-print(elapsed_time)
+time_taken = end - start
+print(f'Time taken - {time_taken:.2f}s = {time_taken/attempts:.2f}s')

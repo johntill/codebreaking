@@ -1,8 +1,8 @@
-import timeit
-
-code_to_test = """
-import re
 import itertools
+import re
+from time import perf_counter
+
+start = perf_counter()
 
 cipher_file = 'texts/Code_texts/enigmacipherJG.txt'
 
@@ -145,7 +145,6 @@ plain = [arr[ch] for ch in plain]
 plain = ''.join(plain)
 print(plain)
 
-"""
-
-elapsed_time = timeit.timeit(code_to_test, number = 1)#/1000
-print(elapsed_time)
+end = perf_counter()
+time_taken = end - start
+print(f'Time taken - {time_taken:.2f}s')
